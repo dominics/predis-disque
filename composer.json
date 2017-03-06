@@ -1,0 +1,28 @@
+{
+  "name": "varspool/predis-disque",
+  "description": "Disque client based on Predis",
+  "minimum-stability": "stable",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Dominic Scheirlinck",
+      "email": "dominic@varspool.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "Varspool\\Disque\\": "src/"
+    }
+  },
+  "extra": {
+    "branch-alias": {
+      "dev-master": "0.0.x-dev"
+    }
+  },
+  "require": {
+    "predis/predis": "~1.1.1"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "~6.0"
+  }
+}
