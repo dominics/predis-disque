@@ -57,7 +57,7 @@ function installFromSource() {
         popd
     fi
 
-    if ! hash disque > /dev/null 2>&1; then
+    if [[ ! -x ${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque ]]; then
         echo "Running make install"
         pushd ${DISQUE_SOURCE_DIR}
 
