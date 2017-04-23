@@ -13,13 +13,7 @@ before_script:
   - scripts/harness &
 
 after_script:
-  - 'pkill scripts/harness || ps aux | grep harness'
-
-addons:
-  apt:
-    packages:
-      - build-essential
-      - tcl8.5
+  - pkill -f scripts/harness
 
 cache:
   directories:
