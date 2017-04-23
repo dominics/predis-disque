@@ -2,6 +2,7 @@
 
 namespace Varspool\Disque\Profile;
 
+use Varspool\Disque\Command\ServerDebug;
 use Varspool\Disque\Command\ServerInfo;
 
 class DisqueVersion100 extends DisqueProfile
@@ -15,6 +16,7 @@ class DisqueVersion100 extends DisqueProfile
     {
         return [
             'INFO' => ServerInfo::class,
+            'DEBUG' => ServerDebug::class,
         ];
     }
 }

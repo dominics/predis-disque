@@ -5,7 +5,7 @@ namespace Varspool\Disque;
 use Varspool\Disque\Configuration\Options;
 
 /**
- * @method mixed ping($message = null)
+ * @method mixed debug($subcommand = null)
  * @method array info($section = null)
  */
 class Client extends \Predis\Client
