@@ -16,4 +16,11 @@
             <directory>tests/</directory>
         </testsuite>
     </testsuites>
+
+    <php>
+        <!-- Disque -->
+        <const name="DISQUE_SERVER_VERSION" value="1.0" />
+        <const name="DISQUE_SERVER_HOST" value="127.0.0.1" />
+        <const name="DISQUE_SERVER_PORT" value="7711" />
+    </php>
 </phpunit>
