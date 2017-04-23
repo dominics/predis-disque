@@ -1,0 +1,16 @@
+language: php
+
+php: '7.1'
+
+before_install:
+   - scripts/install
+
+install:
+   - composer install
+   - cp phpunit.xml.dist phpunit.xml
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - tcl8.5
