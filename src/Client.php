@@ -18,5 +18,4 @@ class Client extends \Predis\Client
 
         return parent::createOptions($options);
     }
-
 }
