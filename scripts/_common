@@ -53,9 +53,6 @@ function installFromSource() {
     fi
 
     if [[ ! -x "$DISQUE_SOURCE_DIR/src/disque" ]]; then
-        echo "Installing build deps"
-        installPackage build-essential tcl8.5
-
         echo "Running make"
         pushd ${DISQUE_SOURCE_DIR}
         make distclean

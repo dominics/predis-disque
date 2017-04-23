@@ -18,3 +18,9 @@ after_script:
 cache:
   directories:
     - build/cache
+
+addons:
+  apt:
+    packages:
+      - build-essential
+      - tcl8.5
