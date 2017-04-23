@@ -5,4 +5,29 @@ set -ex
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source $DIR/_common
 
-installFromSource
+if ! hash disque > /dev/null 2>&1; then
+    if [[ "$OSTYPE" == "linux-gnu" ]]; then
+        if [[ $(lsb_release -si) == "Ubuntu" ]]; then
+            if dpkg --compare-versions $(lsb_release -rs) 'ge' '16.04'; then
+                installPackage disque
+            else
+                installFromSource
+            fi
+        else
+            installFromSource
+        fi
+    elif [[ "$OSTYPE" == "darwin"* ]]; then
+        brew tap colstrom/homebrew-disque
+        brew install colstrom/homebrew-disque/disque
+    fi
+fi
+
+if ! hash disque > /dev/null 2>&1; then
+    echo "Could not find or install disque" >&2
+    exit 2
+fi
+
+if ! hash disque-server > /dev/null 2>&1; then
+    echo "Could not find disque-server" >&2
+    exit 2
+fi
