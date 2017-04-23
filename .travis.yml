@@ -10,7 +10,10 @@ install:
   - cp phpunit.xml.dist phpunit.xml
 
 before_script:
-  - scripts/harness
+  - scripts/harness &
+
+after_script:
+  - 'pkill scripts/harness || ps aux | grep harness'
 
 addons:
   apt:
