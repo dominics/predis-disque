@@ -8,7 +8,10 @@ readonly DISQUE_SOURCE_URL=https://github.com/antirez/disque/archive/${DISQUE_VE
 readonly DISQUE_SOURCE_DOWNLOAD=${CACHE_DIR}/disque-${DISQUE_VERSION}.tar.gz
 readonly DISQUE_SOURCE_DIR=${CACHE_DIR}/disque-${DISQUE_VERSION}
 
+
 function ensureDisque() {
+    set -x
+
     if ! hash disque > /dev/null 2>&1; then
         if [[ "$OSTYPE" == "linux-gnu" ]]; then
             if [[ $(lsb_release -si) == "Ubuntu" ]]; then
@@ -33,6 +36,8 @@ function ensureDisque() {
 }
 
 function ensureDisqueServer() {
+    set -x
+
     if ! hash disque-server > /dev/null 2>&1; then
         if [[ "$OSTYPE" == "linux-gnu" ]]; then
             if [[ $(lsb_release -si) == "Ubuntu" ]]; then
