@@ -17,3 +17,7 @@ addons:
     packages:
       - build-essential
       - tcl8.5
+
+cache:
+  directories:
+    - build/cache

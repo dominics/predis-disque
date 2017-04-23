@@ -1,24 +1,27 @@
 #!/bin/bash
 # Bash functions
 
-readonly CACHE_DIR=${WERCKER_CACHE_DIR:-build}
+set -e
 
-readonly DISQUE_SERVER_VERSION="1.0-rc1"
+readonly DISQUE_BUILD_CACHE_DIR=${DISQUE_BUILD_CACHE_DIR:-build/cache}
+mkdir -p ${DISQUE_BUILD_CACHE_DIR}
+
+DISQUE_SERVER_VERSION=${DISQUE_SERVER_VERSION:-'1.0-rc1'}
 readonly DISQUE_SOURCE_URL=https://github.com/antirez/disque/archive/${DISQUE_SERVER_VERSION}.tar.gz
-readonly DISQUE_SOURCE_DOWNLOAD=${CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}.tar.gz
-readonly DISQUE_SOURCE_DIR=${CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}
+readonly DISQUE_SOURCE_DOWNLOAD=${DISQUE_BUILD_CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}.tar.gz
+readonly DISQUE_SOURCE_DIR=${DISQUE_BUILD_CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}
 
 DISQUE_SOURCE_INSTALL_PREFIX=/usr/local/bin
 DISQUE_SOURCE_INSTALL_ROOT=1
+DISQUE_SOURCE_INSTALL=1
 DISQUE=${DISQUE:-'disque'}
 DISQUE_SERVER=${DISQUE_SERVER:-'disque-server'}
 
 if [[ ${TRAVIS} == "true" ]]; then
-    mkdir -p /home/travis/opt/
-    DISQUE_SOURCE_INSTALL_PREFIX=/home/travis/opt
-    DISQUE_SOURCE_INSTALL_ROOT=0
-    DISQUE=${DISQUE:-"${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque"}
-    DISQUE_SERVER=${DISQUE_SERVER:-"${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque-server"}
+    # Always use the source version, don't bother installing
+    DISQUE_SOURCE_INSTALL=0
+    DISQUE=${DISQUE:-"${DISQUE_SOURCE_DIR}/bin/disque"}
+    DISQUE_SERVER=${DISQUE_SERVER:-"${DISQUE_SOURCE_DIR}/bin/disque-server"}
 fi
 
 function installPackage() {
@@ -57,7 +60,7 @@ function installFromSource() {
         popd
     fi
 
-    if [[ ! -x ${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque ]]; then
+    if [[ ${DISQUE_SOURCE_INSTALL} -eq 1 && ! -x ${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque ]]; then
         echo "Running make install"
         pushd ${DISQUE_SOURCE_DIR}
 
