@@ -1,11 +1,14 @@
 #!/bin/bash
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${DIR}/_common
+
+hash disque > /dev/null 2>&1
+pathDisque=$?
+
 set -ex
 
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $DIR/_common
-
-if ! hash disque > /dev/null 2>&1; then
+if [[ ( ${DISQUE} == "disque" && ${pathDisque} -ne 0 ) || ( ${DISQUE} != "disque" && ! -x ${DISQUE} ) ]]; then
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         if [[ $(lsb_release -si) == "Ubuntu" ]]; then
             if dpkg --compare-versions $(lsb_release -rs) 'ge' '16.04'; then
@@ -22,12 +25,14 @@ if ! hash disque > /dev/null 2>&1; then
     fi
 fi
 
-if ! hash disque > /dev/null 2>&1; then
-    echo "Could not find or install disque" >&2
-    exit 2
-fi
-
-if ! hash disque-server > /dev/null 2>&1; then
-    echo "Could not find disque-server" >&2
-    exit 2
+if [[ ${DISQUE} == "disque" ]]; then
+    if ! hash disque > /dev/null 2>&1; then
+        echo "Could not find disque on PATH after install" >&2
+        exit 2
+    fi
+else
+    if [[ ! -x ${DISQUE} ]]; then
+        echo "Could not find disque at $DISQUE" >&2
+        exit 2
+    fi
 fi
