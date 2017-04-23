@@ -3,11 +3,14 @@ language: php
 php: '7.1'
 
 before_install:
-   - scripts/install
+  - scripts/install
 
 install:
-   - composer install
-   - cp phpunit.xml.dist phpunit.xml
+  - composer install
+  - cp phpunit.xml.dist phpunit.xml
+
+before_script:
+  - scripts/harness
 
 addons:
   apt:
