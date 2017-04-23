@@ -4,12 +4,12 @@ namespace Predisque\Functional;
 
 use Predisque\Client;
 use Predisque\Profile\Factory;
-use Predisque\Test\FunctionalTestCase;
+use Predisque\Test\DisqueTestCase;
 
 /**
  * @see \Predis\ClientTest
  */
-class ClientTest extends FunctionalTestCase
+class ClientTest extends DisqueTestCase
 {
     /**
      * @group disconnected

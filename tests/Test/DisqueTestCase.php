@@ -59,7 +59,7 @@ abstract class DisqueTestCase extends TestCase
      * @return Client
      * @throws \Predis\ClientException
      */
-    protected function createClient(array $parameters = null, array $options = null, $flushall = false)
+    protected function createClient(array $parameters = null, array $options = null, $flushall = true)
     {
         $parameters = array_merge(
             $this->getDefaultParametersArray(),
@@ -79,6 +79,28 @@ abstract class DisqueTestCase extends TestCase
         if ($flushall) {
             $client->debug('flushall');
         }
+
+        return $client;
+    }
+
+    /**
+     * Returns a new client instance.
+     *
+     * @param bool $flushall
+     * @return Client
+     * @throws \Predis\ClientException
+     */
+    public function getClient($flushall = true)
+    {
+        $profile = $this->getProfile();
+
+        if (!$profile->supportsCommand($id = $this->getExpectedId())) {
+            $this->markTestSkipped(
+                "The profile {$profile->getVersion()} does not support command {$id}"
+            );
+        }
+
+        $client = $this->createClient(null, null, $flushall);
 
         return $client;
     }

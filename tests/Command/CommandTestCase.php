@@ -9,27 +9,7 @@ use Predisque\Test\DisqueTestCase;
 
 abstract class CommandTestCase extends DisqueTestCase
 {
-    /**
-     * Returns a new client instance.
-     *
-     * @param bool $flushdb Flush selected database before returning the client.
-     *
-     * @return Client
-     */
-    public function getClient($flushdb = true)
-    {
-        $profile = $this->getProfile();
 
-        if (!$profile->supportsCommand($id = $this->getExpectedId())) {
-            $this->markTestSkipped(
-                "The profile {$profile->getVersion()} does not support command {$id}"
-            );
-        }
-
-        $client = $this->createClient(null, null, $flushdb);
-
-        return $client;
-    }
 
     /**
      * Returns the expected command ID.
