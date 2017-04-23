@@ -8,6 +8,19 @@ readonly DISQUE_SOURCE_URL=https://github.com/antirez/disque/archive/${DISQUE_SE
 readonly DISQUE_SOURCE_DOWNLOAD=${CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}.tar.gz
 readonly DISQUE_SOURCE_DIR=${CACHE_DIR}/disque-${DISQUE_SERVER_VERSION}
 
+DISQUE_SOURCE_INSTALL_PREFIX=/usr/local/bin
+DISQUE_SOURCE_INSTALL_ROOT=1
+DISQUE=${DISQUE:-'disque'}
+DISQUE_SERVER=${DISQUE_SERVER:-'disque-server'}
+
+if [[ ${TRAVIS} == "true" ]]; then
+    mkdir -p /home/travis/opt/
+    DISQUE_SOURCE_INSTALL_PREFIX=/home/travis/opt
+    DISQUE_SOURCE_INSTALL_ROOT=0
+    DISQUE=${DISQUE:-"${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque"}
+    DISQUE_SERVER=${DISQUE_SERVER:-"${DISQUE_SOURCE_INSTALL_PREFIX}/bin/disque-server"}
+fi
+
 function installPackage() {
     export DEBIAN_FRONTEND=noninteractive
 
@@ -49,13 +62,10 @@ function installFromSource() {
         pushd ${DISQUE_SOURCE_DIR}
 
         if [[ $EUID -ne 0 ]]; then
-            if [[ ${TRAVIS} == "true" ]]; then
-                mkdir -p /home/travis/opt/
-                PREFIX=/home/travis/opt/ make install
-                export PATH="/home/travis/opt/bin:$PATH"
-                find /home/travis/opt
+            if [[ ${DISQUE_SOURCE_INSTALL_ROOT} -ne 1 ]]; then
+                PREFIX=${DISQUE_SOURCE_INSTALL_PREFIX} make install
             else
-                sudo make install
+                PREFIX=${DISQUE_SOURCE_INSTALL_PREFIX} sudo -E make install
             fi
         else
             make install

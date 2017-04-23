@@ -5,14 +5,11 @@ set -x
 set -o pipefail
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source $DIR/_common
+source ${DIR}/_common
 
 RUN_ID=$(date +%Y%m%d%H%M%S)
 BUILD_DIR="${DIR}/../build/${RUN_ID}"
 BIND=${DISQUE_SERVER_HOST:-127.0.0.1}
-
-DISQUE=${DISQUE:-'disque'}
-DISQUE_SERVER=${DISQUE_SERVER:-'disque-server'}
 
 mkdir -p $BUILD_DIR
 
@@ -20,19 +17,19 @@ readonly PORT_1=${DISQUE_SERVER_PORT:-7711}
 readonly PORT_2=$(($PORT_1+1))
 readonly PORT_3=$(($PORT_1+2))
 
-$DISQUE_SERVER \
+${DISQUE_SERVER} \
     --port $PORT_1 \
     --cluster-config-file $BUILD_DIR/nodes-$PORT_1.conf \
     --bind ${BIND} > $BUILD_DIR/server.$RUN_ID.1.log 2>&1 &
 readonly SERVER_PID_1=$!
 
-$DISQUE_SERVER \
+${DISQUE_SERVER} \
     --port $PORT_2 \
     --cluster-config-file $BUILD_DIR/nodes-$PORT_2.conf \
     --bind ${BIND} > $BUILD_DIR/server.$RUN_ID.2.log 2>&1 &
 readonly SERVER_PID_2=$!
 
-$DISQUE_SERVER \
+${DISQUE_SERVER} \
     --port $PORT_3 \
     --cluster-config-file $BUILD_DIR/nodes-$PORT_3.conf \
     --bind ${BIND} > $BUILD_DIR/server.$RUN_ID.3.log 2>&1 &
@@ -44,9 +41,9 @@ function finish {
 
   echo "Setting custer leaving state..." >&2
 
-  echo "CLUSTER LEAVING yes" | $DISQUE -h $BIND -p $PORT_1
-  echo "CLUSTER LEAVING yes" | $DISQUE -h $BIND -p $PORT_2
-  echo "CLUSTER LEAVING yes" | $DISQUE -h $BIND -p $PORT_3
+  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_1
+  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_2
+  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_3
 
   echo "Waiting a bit..." >&2
 
@@ -54,16 +51,16 @@ function finish {
 
   echo "Running forget across nodes..." >&2
 
-  RUN_ID_1=$($DISQUE -h $BIND -p $PORT_1 info | grep run_id | cut -d : -f 2)
-  RUN_ID_2=$($DISQUE -h $BIND -p $PORT_2 info | grep run_id | cut -d : -f 2)
-  RUN_ID_3=$($DISQUE -h $BIND -p $PORT_3 info | grep run_id | cut -d : -f 2)
+  RUN_ID_1=$(${DISQUE} -h $BIND -p $PORT_1 info | grep run_id | cut -d : -f 2)
+  RUN_ID_2=$(${DISQUE} -h $BIND -p $PORT_2 info | grep run_id | cut -d : -f 2)
+  RUN_ID_3=$(${DISQUE} -h $BIND -p $PORT_3 info | grep run_id | cut -d : -f 2)
 
-  echo "CLUSTER FORGET $RUN_ID_1" | $DISQUE -h $BIND -p $PORT_2
-  echo "CLUSTER FORGET $RUN_ID_1" | $DISQUE -h $BIND -p $PORT_3
-  echo "CLUSTER FORGET $RUN_ID_2" | $DISQUE -h $BIND -p $PORT_1
-  echo "CLUSTER FORGET $RUN_ID_2" | $DISQUE -h $BIND -p $PORT_3
-  echo "CLUSTER FORGET $RUN_ID_3" | $DISQUE -h $BIND -p $PORT_1
-  echo "CLUSTER FORGET $RUN_ID_3" | $DISQUE -h $BIND -p $PORT_2
+  echo "CLUSTER FORGET $RUN_ID_1" | ${DISQUE} -h $BIND -p ${PORT_2}
+  echo "CLUSTER FORGET $RUN_ID_1" | ${DISQUE} -h $BIND -p ${PORT_3}
+  echo "CLUSTER FORGET $RUN_ID_2" | ${DISQUE} -h $BIND -p ${PORT_1}
+  echo "CLUSTER FORGET $RUN_ID_2" | ${DISQUE} -h $BIND -p ${PORT_3}
+  echo "CLUSTER FORGET $RUN_ID_3" | ${DISQUE} -h $BIND -p ${PORT_1}
+  echo "CLUSTER FORGET $RUN_ID_3" | ${DISQUE} -h $BIND -p ${PORT_2}
 
   echo "Killing PIDs..." >&2
 
@@ -89,14 +86,14 @@ echo "Servers are { $SERVER_PID_1, $SERVER_PID_2, $SERVER_PID_3 }"
 sleep 1
 
 echo "Introducing..."
-$DISQUE -p $PORT_1 cluster meet $BIND $PORT_2
-$DISQUE -p $PORT_1 cluster meet $BIND $PORT_3
+${DISQUE} -p $PORT_1 cluster meet $BIND $PORT_2
+${DISQUE} -p $PORT_1 cluster meet $BIND $PORT_3
 
-$DISQUE -p $PORT_2 cluster meet $BIND $PORT_1
-$DISQUE -p $PORT_2 cluster meet $BIND $PORT_3
+${DISQUE} -p $PORT_2 cluster meet $BIND $PORT_1
+${DISQUE} -p $PORT_2 cluster meet $BIND $PORT_3
 
-$DISQUE -p $PORT_3 cluster meet $BIND $PORT_1
-$DISQUE -p $PORT_3 cluster meet $BIND $PORT_2
+${DISQUE} -p $PORT_3 cluster meet $BIND $PORT_1
+${DISQUE} -p $PORT_3 cluster meet $BIND $PORT_2
 
 set +e
 
@@ -105,9 +102,9 @@ TEST_JOB="{\"some\":\"job-$RANDOM\"}"
 
 while true; do
     echo "Adding jobs to all 3 running nodes"
-    $DISQUE -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
-    $DISQUE -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
-    $DISQUE -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+    ${DISQUE} -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+    ${DISQUE} -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+    ${DISQUE} -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
 
     sleep 5
 done
