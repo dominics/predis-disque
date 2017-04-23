@@ -11,23 +11,13 @@
 
 namespace Predisque\Command;
 
-/**
- * @group commands
- * @group realm-hash
- */
 class QueueLengthTest extends CommandTestCase
 {
-    /**
-     * {@inheritdoc}
-     */
     protected function getExpectedCommand()
     {
         return QueueLength::class;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getExpectedId()
     {
         return 'QLEN';

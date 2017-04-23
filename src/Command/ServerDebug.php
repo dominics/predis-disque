@@ -2,8 +2,6 @@
 
 namespace Predisque\Command;
 
-use Predis\Command\Command;
-
 class ServerDebug extends Command
 {
     /**

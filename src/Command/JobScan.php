@@ -19,7 +19,7 @@ class JobScan extends AbstractScan
             $normalized[] = $options['QUEUE'];
         }
 
-        if (!empty($options['STATE '])) {
+        if (!empty($options['STATE'])) {
             if (!is_iterable($options['STATE'])) {
                 $options['STATE'] = [$options['STATE']];
             }

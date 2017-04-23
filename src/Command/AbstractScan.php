@@ -2,8 +2,6 @@
 
 namespace Predisque\Command;
 
-use Predis\Command\Command;
-
 abstract class AbstractScan extends Command
 {
     protected function filterArguments(array $arguments)

@@ -3,10 +3,6 @@
 
 namespace Predisque\Command;
 
-/**
- * @group commands
- * @group realm-key
- */
 class JobDeleteTest extends CommandTestCase
 {
     /**
