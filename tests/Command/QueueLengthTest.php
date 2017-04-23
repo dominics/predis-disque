@@ -58,26 +58,14 @@ class QueueLengthTest extends CommandTestCase
     /**
      * @group connected
      */
-    public function testReturnsLengthOfHash()
+    public function testReturnsLengthOfQueue()
     {
-        $redis = $this->getClient();
+        $disque = $this->getClient();
 
-        $redis->hmset('metavars', 'foo', 'bar', 'hoge', 'piyo', 'lol', 'wut');
+        $disque->addjob('foo', 'bar', 1000);
+        $disque->addjob('foo', 'bar2', 1000);
 
-        $this->assertSame(3, $redis->hlen('metavars'));
-        $this->assertSame(0, $redis->hlen('unknown'));
-    }
-
-    /**
-     * @group connected
-     * @expectedException \Predis\Response\ServerException
-     * @expectedExceptionMessage Operation against a key holding the wrong kind of value
-     */
-    public function testThrowsExceptionOnWrongType()
-    {
-        $redis = $this->getClient();
-
-        $redis->set('foo', 'bar');
-        $redis->hlen('foo');
+        $this->assertSame(2, $disque->qlen('foo'));
+        $this->assertSame(0, $disque->qlen('unknown'));
     }
 }

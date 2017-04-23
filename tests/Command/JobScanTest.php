@@ -17,26 +17,13 @@ namespace Predisque\Command;
  */
 class JobScanTest extends CommandTestCase
 {
-    protected function getExpectedCommand()
-    {
-        return JobScan::class;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    protected function getExpectedId()
-    {
-        return 'JSCAN';
-    }
-
     /**
      * @group disconnected
      */
     public function testFilterArguments()
     {
-        $arguments = array(0, 'MATCH', 'key:*', 'COUNT', 5);
-        $expected = array(0, 'MATCH', 'key:*', 'COUNT', 5);
+        $arguments = [0, 'MATCH', 'key:*', 'COUNT', 5];
+        $expected = [0, 'MATCH', 'key:*', 'COUNT', 5];
 
         $command = $this->getCommand();
         $command->setArguments($arguments);
@@ -49,8 +36,8 @@ class JobScanTest extends CommandTestCase
      */
     public function testFilterArgumentsBasicUsage()
     {
-        $arguments = array(0);
-        $expected = array(0);
+        $arguments = [0];
+        $expected = [0];
 
         $command = $this->getCommand();
         $command->setArguments($arguments);
@@ -63,8 +50,22 @@ class JobScanTest extends CommandTestCase
      */
     public function testFilterArgumentsWithOptionsArray()
     {
-        $arguments = array(0, array('match' => 'key:*', 'count' => 5));
-        $expected = array(0, 'MATCH', 'key:*', 'COUNT', 5);
+        $arguments = [['count' => 5, 'queue' => 'foo']];
+        $expected = ['COUNT', 5, 'QUEUE', 'foo'];
+
+        $command = $this->getCommand();
+        $command->setArguments($arguments);
+
+        $this->assertSame($expected, $command->getArguments());
+    }
+
+    /**
+     * @group disconnected
+     */
+    public function testFilterArgumentsWithOptionsArrayAndCursor()
+    {
+        $arguments = [7, ['count' => 5]];
+        $expected = [7, 'COUNT', 5];
 
         $command = $this->getCommand();
         $command->setArguments($arguments);
@@ -77,11 +78,24 @@ class JobScanTest extends CommandTestCase
      */
     public function testParseResponse()
     {
-        $raw = array('3', array('key:1', 'key:2', 'key:3'));
-        $expected = array('3', array('key:1', 'key:2', 'key:3'));
+        $raw = ['3', ['key:1', 'key:2', 'key:3']];
+        $expected = ['3', ['key:1', 'key:2', 'key:3']];
 
         $command = $this->getCommand();
 
         $this->assertSame($expected, $command->parseResponse($raw));
+    }
+
+    protected function getExpectedCommand()
+    {
+        return JobScan::class;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    protected function getExpectedId()
+    {
+        return 'JSCAN';
     }
 }
