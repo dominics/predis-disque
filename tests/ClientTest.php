@@ -1,8 +1,8 @@
 <?php
 
-namespace Predisque\Functional;
+namespace Predisque;
 
-use Predisque\Client;
+use Predis\Connection\NodeConnectionInterface;
 use Predisque\Profile\Factory;
 use Predisque\Test\DisqueTestCase;
 
@@ -19,7 +19,7 @@ class ClientTest extends DisqueTestCase
         $client = new Client();
 
         $connection = $client->getConnection();
-        $this->assertInstanceOf('Predis\Connection\NodeConnectionInterface', $connection);
+        $this->assertInstanceOf(NodeConnectionInterface::class, $connection);
 
         $parameters = $connection->getParameters();
         $this->assertSame($parameters->host, '127.0.0.1');
