@@ -1,10 +1,10 @@
 <?php
 
-namespace Varspool\Disque\Command;
+namespace Predisque\Command;
 
 use Predis\Command\Command;
 
-class Enqueue extends Command
+class JobEnqueue extends Command
 {
     public function getId()
     {

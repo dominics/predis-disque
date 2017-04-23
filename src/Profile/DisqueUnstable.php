@@ -1,6 +1,6 @@
 <?php
 
-namespace Varspool\Disque\Profile;
+namespace Predisque\Profile;
 
 class DisqueUnstable extends DisqueVersion100
 {

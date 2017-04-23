@@ -1,11 +1,11 @@
 <?php
 
-namespace Varspool\Disque\Test;
+namespace Predisque\Test;
 
 use PHPUnit\Framework\TestCase;
-use Varspool\Disque\Client;
-use Varspool\Disque\Profile\Factory;
-use Varspool\Disque\Profile\ProfileInterface;
+use Predisque\Client;
+use Predisque\Profile\Factory;
+use Predisque\Profile\ProfileInterface;
 
 /**
  * @see \PredisTestCase

@@ -1,5 +1,5 @@
 {
-  "name": "varspool/predis-disque",
+  "name": "varspool/predisque",
   "description": "Disque client based on Predis",
   "minimum-stability": "stable",
   "license": "MIT",
@@ -11,12 +11,12 @@
   ],
   "autoload": {
     "psr-4": {
-      "Varspool\\Disque\\": "src/"
+      "Predisque\\": "src/"
     }
   },
   "autoload-dev": {
     "psr-4": {
-      "Varspool\\Disque\\": "tests/"
+      "Predisque\\": "tests/"
     }
   },
   "extra": {
@@ -29,6 +29,6 @@
     "predis/predis": "~1.1.1"
   },
   "require-dev": {
-    "phpunit/phpunit": "~6.0"
+    "phpunit/phpunit": "~6.1"
   }
 }

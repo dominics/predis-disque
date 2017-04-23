@@ -1,6 +1,6 @@
 <?php
 
-namespace Varspool\Disque\Command;
+namespace Predisque\Command;
 
 /**
  * @see \Predis\Command\ServerConfigTest

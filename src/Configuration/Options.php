@@ -1,6 +1,6 @@
 <?php
 
-namespace Varspool\Disque\Configuration;
+namespace Predisque\Configuration;
 
 use Predis\Configuration\ExceptionsOption;
 use Predis\Configuration\Options as PredisOptions;

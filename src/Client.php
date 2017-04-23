@@ -1,8 +1,8 @@
 <?php
 
-namespace Varspool\Disque;
+namespace Predisque;
 
-use Varspool\Disque\Configuration\Options;
+use Predisque\Configuration\Options;
 
 /**
  * @method mixed debug($subcommand = null)

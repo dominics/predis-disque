@@ -1,6 +1,6 @@
-# predis-disque
+# predisque
 
-A partial implementation of Disque client commands for the Predis client. 
+An implementation of Disque client commands for the Predis client.
 
 Useful if you just need to connect to a single Disque node and interrogate
 it, e.g. for monitoring purposes. This is surprisingly hard with some
@@ -14,5 +14,5 @@ The command set is incomplete.
 A work in progress.
 
 Obviously, everything about this implementation that is good is due to
-@nrk/Daniele Alessandri - and everything about it that is bad is due
+@nrk - and everything about it that is bad is due
 to @dominics :)

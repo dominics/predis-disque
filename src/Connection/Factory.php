@@ -1,6 +1,6 @@
 <?php
 
-namespace Varspool\Disque\Connection;
+namespace Predisque\Connection;
 
 use Predis\Connection\ParametersInterface;
 

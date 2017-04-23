@@ -1,25 +1,25 @@
 <?php
 
-namespace Varspool\Disque\Profile;
+namespace Predisque\Profile;
 
-use Varspool\Disque\Command\JobAck;
-use Varspool\Disque\Command\JobAdd;
-use Varspool\Disque\Command\JobDelete;
-use Varspool\Disque\Command\JobFastAck;
-use Varspool\Disque\Command\JobGet;
-use Varspool\Disque\Command\JobNack;
-use Varspool\Disque\Command\JobScan;
-use Varspool\Disque\Command\JobShow;
-use Varspool\Disque\Command\JobWorking;
-use Varspool\Disque\Command\QueueLength;
-use Varspool\Disque\Command\QueuePause;
-use Varspool\Disque\Command\QueuePeek;
-use Varspool\Disque\Command\QueueScan;
-use Varspool\Disque\Command\QueueStatistics;
-use Varspool\Disque\Command\ServerConfig;
-use Varspool\Disque\Command\ServerDebug;
-use Varspool\Disque\Command\ServerHello;
-use Varspool\Disque\Command\ServerInfo;
+use Predisque\Command\JobAck;
+use Predisque\Command\JobAdd;
+use Predisque\Command\JobDelete;
+use Predisque\Command\JobFastAck;
+use Predisque\Command\JobGet;
+use Predisque\Command\JobNack;
+use Predisque\Command\JobScan;
+use Predisque\Command\JobShow;
+use Predisque\Command\JobWorking;
+use Predisque\Command\QueueLength;
+use Predisque\Command\QueuePause;
+use Predisque\Command\QueuePeek;
+use Predisque\Command\QueueScan;
+use Predisque\Command\QueueStatistics;
+use Predisque\Command\ServerConfig;
+use Predisque\Command\ServerDebug;
+use Predisque\Command\ServerHello;
+use Predisque\Command\ServerInfo;
 
 class DisqueVersion100 extends DisqueProfile
 {

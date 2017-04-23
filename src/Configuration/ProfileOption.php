@@ -9,12 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Varspool\Disque\Configuration;
+namespace Predisque\Configuration;
 
 use Predis\Configuration\OptionsInterface;
 use Predis\Configuration\ProfileOption as PredisProfileOption;
-use Varspool\Disque\Profile\Factory;
-use Varspool\Disque\Profile\ProfileInterface;
+use Predisque\Profile\Factory;
+use Predisque\Profile\ProfileInterface;
 
 class ProfileOption extends PredisProfileOption
 {

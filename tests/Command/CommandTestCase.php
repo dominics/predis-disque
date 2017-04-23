@@ -1,11 +1,11 @@
 <?php
 
-namespace Varspool\Disque\Command;
+namespace Predisque\Command;
 
 use Predis\Client;
 use Predis\Command\CommandInterface;
 use Predis\Command\PrefixableCommandInterface;
-use Varspool\Disque\Test\DisqueTestCase;
+use Predisque\Test\DisqueTestCase;
 
 abstract class CommandTestCase extends DisqueTestCase
 {

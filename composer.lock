@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "cf0f40e4e95659586e9257aac2ab4a69",
+    "content-hash": "6006fdfd2e6fb306f80c23c3e3e891b6",
     "packages": [
         {
             "name": "predis/predis",

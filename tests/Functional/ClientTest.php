@@ -1,10 +1,10 @@
 <?php
 
-namespace Varspool\Disque\Functional;
+namespace Predisque\Functional;
 
-use Varspool\Disque\Client;
-use Varspool\Disque\Profile\Factory;
-use Varspool\Disque\Test\FunctionalTestCase;
+use Predisque\Client;
+use Predisque\Profile\Factory;
+use Predisque\Test\FunctionalTestCase;
 
 /**
  * @see \Predis\ClientTest

@@ -1,10 +1,10 @@
 <?php
 
-namespace Varspool\Disque\Configuration;
+namespace Predisque\Configuration;
 
 use Predis\Configuration\ConnectionFactoryOption as PredisConnectionFactoryOption;
 use Predis\Configuration\OptionsInterface;
-use Varspool\Disque\Connection\Factory;
+use Predisque\Connection\Factory;
 
 class ConnectionFactoryOption extends PredisConnectionFactoryOption
 {

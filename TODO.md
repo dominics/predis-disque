@@ -10,7 +10,7 @@
  - FastAck
  - GetJob
  - Hello
- - Info
+ - [x] Info
  - JScan
  - Nack
  - Pause

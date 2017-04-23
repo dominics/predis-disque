@@ -1,6 +1,6 @@
 <?php
 
-namespace Varspool\Disque\Test;
+namespace Predisque\Test;
 
 abstract class FunctionalTestCase extends DisqueTestCase
 {
