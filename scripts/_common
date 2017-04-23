@@ -98,7 +98,7 @@ function installFromSource() {
         popd
     fi
 
-    if [[ ! -x /usr/local/bin/disque ]]; then
+    if ! hash disque > /dev/null 2>&1; then
         echo "Running make install"
         pushd $DISQUE_SOURCE_DIR
 
