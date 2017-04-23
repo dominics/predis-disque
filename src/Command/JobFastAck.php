@@ -4,7 +4,7 @@ namespace Predisque\Command;
 
 use Predis\Command\Command;
 
-class JobFastAck extends Command
+class JobFastAck extends AbstractJobMulti
 {
     public function getId()
     {

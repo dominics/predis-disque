@@ -5,6 +5,8 @@ namespace Predisque\Profile;
 use Predisque\Command\JobAck;
 use Predisque\Command\JobAdd;
 use Predisque\Command\JobDelete;
+use Predisque\Command\JobDequeue;
+use Predisque\Command\JobEnqueue;
 use Predisque\Command\JobFastAck;
 use Predisque\Command\JobGet;
 use Predisque\Command\JobNack;
@@ -37,6 +39,8 @@ class DisqueVersion100 extends DisqueProfile
             'ACKJOB' => JobAck::class,
             'ADDJOB' => JobAdd::class,
             'DELJOB' => JobDelete::class,
+            'DEQUEUE' => JobDequeue::class,
+            'ENQUEUE' => JobEnqueue::class,
             'FASTACK' => JobFastAck::class,
             'GETJOB' => JobGet::class,
             'NACK' => JobNack::class,

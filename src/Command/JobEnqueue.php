@@ -2,9 +2,7 @@
 
 namespace Predisque\Command;
 
-use Predis\Command\Command;
-
-class JobEnqueue extends Command
+class JobEnqueue extends AbstractJobMulti
 {
     public function getId()
     {

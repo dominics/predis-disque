@@ -2,9 +2,7 @@
 
 namespace Predisque\Command;
 
-use Predis\Command\Command;
-
-class JobDelete extends Command
+class JobDelete extends AbstractJobMulti
 {
     public function getId()
     {

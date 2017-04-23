@@ -2,9 +2,7 @@
 
 namespace Predisque\Command;
 
-use Predis\Command\Command;
-
-class JobShow extends Command
+class JobShow extends AbstractJob
 {
     public function getId()
     {
