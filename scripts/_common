@@ -101,6 +101,8 @@ function installFromSource() {
             if [[ $TRAVIS == "true" ]]; then
                 mkdir -p /home/travis/opt/
                 PREFIX=/home/travis/opt/ make install
+                export PATH="/home/travis/opt/bin:$PATH"
+                find /home/travis/opt
             else
                 sudo make install
             fi
