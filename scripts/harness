@@ -100,13 +100,17 @@ set +e
 TEST_QUEUE="test_queue_$RANDOM"
 TEST_JOB="{\"some\":\"job-$RANDOM\"}"
 
-while true; do
-    echo "Adding jobs to all 3 running nodes"
-    ${DISQUE} -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
-    ${DISQUE} -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
-    ${DISQUE} -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+echo "Adding jobs to all 3 running nodes"
+${DISQUE} -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+${DISQUE} -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+${DISQUE} -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
 
-    sleep 5
-done
+sleep 5
 
+echo "Adding jobs to all 3 running nodes"
+${DISQUE} -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+${DISQUE} -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+${DISQUE} -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+
+echo "Waiting for shutdown signal"
 wait
