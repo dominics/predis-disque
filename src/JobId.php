@@ -23,7 +23,7 @@ class JobId implements ResponseInterface
         $parts = explode('-', $this->id);
 
         if (count($parts) != 4 || $parts[0] !== self::PREFIX) {
-            throw new PredisqueException('Invalid job ID format: ' . $id);
+            throw new PredisqueException('Invalid job ID format: ' . $this->id);
         }
 
         $this->nodePrefix = $parts[1];
