@@ -12,7 +12,12 @@ install:
 before_script:
   - scripts/harness &
 
+script: |
+         ./vendor/bin/phpunit \
+           --coverage-clover=build/coverage.clover
+
 after_script:
+  - ./scripts/ocular code-coverage:upload --format=php-clover build/coverage.clover
   - pkill -f scripts/harness
 
 cache:

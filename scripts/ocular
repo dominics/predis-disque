@@ -1,0 +1,27 @@
+#!/bin/bash
+#
+# Simple wrapper to download ocular before use
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${DIR}/_common
+
+set -e
+set -x
+
+readonly URL=https://scrutinizer-ci.com/ocular.phar
+readonly OCULAR=${DIR}/../build/cache/ocular.phar
+
+if [[ ! -d $(dirname $OCULAR) ]]; then
+    mkdir -p $(dirname $OCULAR)
+fi
+
+if [[ ! -x $OCULAR ]]; then
+    download=$(mktemp)
+
+    wget $URL -O $download
+    chmod +x $download
+
+    mv $download $OCULAR
+fi
+
+exec $OCULAR "$@"
