@@ -12,7 +12,7 @@ class ServerConfig extends Command
     public function parseResponse($data)
     {
         if (is_array($data)) {
-            $result = array();
+            $result = [];
 
             for ($i = 0; $i < count($data); ++$i) {
                 $result[$data[$i]] = $data[++$i];
