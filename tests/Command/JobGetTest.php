@@ -87,10 +87,10 @@ class JobGetTest extends CommandTestCase
     {
         $disque = $this->getClient();
 
-        $id1 = $disque->addJob('foo', 'bar1', 10000);
-        $id2 = $disque->addJob('foo', 'bar2', 10000);
-        $id3 = $disque->addJob('foo', 'bar3', 10000);
-        $id4 = $disque->addJob('foo', 'bar4', 10000);
+        $id1 = (string)$disque->addJob('foo', 'bar1', 10000);
+        $id2 = (string)$disque->addJob('foo', 'bar2', 10000);
+        $id3 = (string)$disque->addJob('foo', 'bar3', 10000);
+        $id4 = (string)$disque->addJob('foo', 'bar4', 10000);
 
         $jobs = $disque->getJob(['foo'], ['nohang' => true, 'count' => 3]);
 

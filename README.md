@@ -18,3 +18,5 @@ Should be considered alpha code so far; do not use it in production yet.
 
 **Warning: the test suite uses the `DEBUG FLUSHALL` command. Do not run the tests against a Disque instance you care
 about.**
+
+`./vendor/bin/phpunit`
