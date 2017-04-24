@@ -3,15 +3,15 @@
 
 namespace Predisque\Command;
 
-class JobAckTest extends AbstractJobMultiTest
+class JobFastAckTest extends AbstractJobMultiTest
 {
     protected function getExpectedCommand()
     {
-        return JobAck::class;
+        return JobFastAck::class;
     }
 
     protected function getExpectedId()
     {
-        return 'ACKJOB';
+        return 'FASTACK';
     }
 }

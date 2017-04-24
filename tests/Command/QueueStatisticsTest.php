@@ -31,16 +31,11 @@ class QueueStatisticsTest extends CommandTestCase
         $this->assertSame($expected, $command->parseResponse($raw));
     }
 
-
-
     protected function getExpectedCommand()
     {
         return QueueStatistics::class;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getExpectedId()
     {
         return 'QSTAT';

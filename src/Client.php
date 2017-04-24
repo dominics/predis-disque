@@ -167,9 +167,6 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         };
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getProfile()
     {
         return $this->profile;
@@ -356,9 +353,6 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         return new MonitorConsumer($this);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getIterator()
     {
         $clients = [];
@@ -375,17 +369,11 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         return new \ArrayIterator($clients);
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getConnection()
     {
         return $this->connection;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getOptions()
     {
         return $this->options;

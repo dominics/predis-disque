@@ -4,17 +4,11 @@ namespace Predisque\Command;
 
 class ServerDebug extends Command
 {
-    /**
-     * {@inheritdoc}
-     */
     public function getId()
     {
         return 'DEBUG';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function parseResponse($data)
     {
         if (is_array($data)) {

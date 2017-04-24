@@ -19,25 +19,13 @@ class ServerCluster extends Command
         return 'CLUSTER';
     }
 
-    protected function filterArguments(array $arguments)
-    {
-        $subcommand = $arguments[0];
-
-        return parent::filterArguments($arguments);
-    }
-
     public function parseResponse($data)
     {
-        if (is_array($data)) {
-            $result = [];
-
-            for ($i = 0; $i < count($data); ++$i) {
-                $result[$data[$i]] = $data[++$i];
-            }
-
-            return $result;
+        switch (strtolower($this->getArgument(0))) {
+            case 'info':
+                return $this->parseArray($data);
+            default:
+                return $data;
         }
-
-        return $data;
     }
 }

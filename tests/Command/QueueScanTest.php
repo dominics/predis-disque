@@ -78,9 +78,6 @@ class QueueScanTest extends CommandTestCase
         return QueueScan::class;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getExpectedId()
     {
         return 'QSCAN';

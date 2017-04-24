@@ -2,7 +2,7 @@
 
 namespace Predisque\Command;
 
-class JobWorking extends AbstractJob
+class JobWorking extends Command
 {
     public function getId()
     {

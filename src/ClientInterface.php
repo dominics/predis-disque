@@ -10,7 +10,7 @@ use Predisque\Profile\ProfileInterface;
 /**
  * @method string addJob(string $queueName, string $job, int $msTimeout, array $options = [])
  * @method string delJob(string $jobId, string ...$jobIds)
- *
+ * @method mixed getJob(array $queues, array $options = []) or getJob(string $queue, string $queue2, ..., array $options)
  * @method array show(string $jobId)
  * @method mixed debug($subcommand = null)
  * @method array info($section = null)
@@ -56,7 +56,7 @@ interface ClientInterface /* extends \Predis\ClientInterface */
      *
      * @return CommandInterface
      */
-    public function createCommand($method, $arguments = array());
+    public function createCommand($method, $arguments = []);
 
     /**
      * Executes the specified Redis command.

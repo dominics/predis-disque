@@ -2,6 +2,8 @@
 
 namespace Predisque\Command;
 
+use Predis\Response\Status;
+
 class JobAddTest extends CommandTestCase
 {
     protected function getExpectedId()
@@ -12,18 +14,6 @@ class JobAddTest extends CommandTestCase
     protected function getExpectedCommand()
     {
         return JobAdd::class;
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testParseResponse()
-    {
-        $command = $this->getCommand();
-
-        $id = 'D-12345678-123456789012345678-1234';
-
-        $this->assertSame($id, $command->parseResponse($id));
     }
 
     /**
@@ -59,5 +49,15 @@ class JobAddTest extends CommandTestCase
         $command->setArguments($arguments);
 
         $this->assertSame($expected, $command->getArguments());
+    }
+
+    public function testAddJob()
+    {
+        $client = $this->getClient();
+
+        $response = $client->addJob('foo', 'bar', 10000);
+
+        $this->assertInstanceOf(Status::class, $response);
+        $this->assertRegExp('/D-.*/', (string)$response);
     }
 }

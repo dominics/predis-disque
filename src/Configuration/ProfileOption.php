@@ -30,9 +30,6 @@ class ProfileOption extends PredisProfileOption
         return $value;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function getDefault(OptionsInterface $options)
     {
         $profile = Factory::getDefault();

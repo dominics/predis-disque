@@ -30,4 +30,14 @@ abstract class AbstractJobMultiTest extends CommandTestCase
 
         $this->assertSame($expected, $command->getArguments());
     }
+
+    /**
+     * @group disconnected
+     */
+    public function testParseResponse()
+    {
+        $command = $this->getCommand();
+
+        $this->assertSame(10, $command->parseResponse(10));
+    }
 }

@@ -2,17 +2,25 @@
 
 namespace Predisque;
 
-class JobId
+use Predis\Response\ResponseInterface;
+
+class JobId implements ResponseInterface
 {
     const PREFIX = 'D';
 
-    protected $nodePrefix;
-    protected $random;
-    protected $ttl;
+    public $id;
+    public $nodePrefix;
+    public $random;
+    public $ttl;
 
     public function __construct(string $id)
     {
-        $parts = explode('-', $id);
+        $this->id = $id;
+    }
+
+    public function parse(): void
+    {
+        $parts = explode('-', $this->id);
 
         if (count($parts) != 4 || $parts[0] !== self::PREFIX) {
             throw new PredisqueException('Invalid job ID format: ' . $id);
@@ -27,13 +35,23 @@ class JobId
         }
     }
 
-    public function __toString()
+    public function fromParts(): string
     {
-        return implode('-', [
+        return implode('-', $this->getParts());
+    }
+
+    public function getParts(): array
+    {
+        return [
             self::PREFIX,
             $this->nodePrefix,
             $this->random,
             $this->ttl,
-        ]);
+        ];
+    }
+
+    public function __toString()
+    {
+        return $this->id;
     }
 }

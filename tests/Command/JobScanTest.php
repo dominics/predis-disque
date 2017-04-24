@@ -78,9 +78,6 @@ class JobScanTest extends CommandTestCase
         return JobScan::class;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function getExpectedId()
     {
         return 'JSCAN';

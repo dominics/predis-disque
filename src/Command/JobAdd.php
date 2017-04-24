@@ -9,9 +9,6 @@ class JobAdd extends Command
         return 'ADDJOB';
     }
 
-    /**
-     * {@inheritdoc}
-     */
     protected function filterArguments(array $arguments)
     {
         if (count($arguments) === 4 && is_array($arguments[3])) {
@@ -23,16 +20,16 @@ class JobAdd extends Command
     }
 
     /**
-     * Returns a list of options and modifiers compatible with Redis.
+     * Returns a list of options and modifiers compatible with Disque
      *
-     * @param array $options List of options.
+     * @param array $options List of options
      *
      * @return array
      */
     protected function prepareOptions($options)
     {
         $options = array_change_key_case($options, CASE_UPPER);
-        $normalized = array();
+        $normalized = [];
 
         if (!empty($options['REPLICATE'])) {
             $normalized[] = 'REPLICATE';
