@@ -1,10 +1,10 @@
 # TODO
 
-## Commands
+## Command implementation and tests
 
  - AckJob
- - AddJob
- - DelJob
+ - [x] AddJob
+ - [x] DelJob
  - Dequeue
  - Enqueue
  - FastAck
@@ -14,9 +14,9 @@
  - JScan
  - Nack
  - Pause
- - QLen
+ - [x] QLen
  - QPeek
  - QScan
  - QStat
- - Show
+ - [x] Show
  - Working
