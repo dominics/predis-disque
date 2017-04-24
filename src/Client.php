@@ -38,8 +38,7 @@ use Predisque\Configuration\Options;
  * @method mixed debug($subcommand = null)
  * @method array info($section = null)
  */
-class Client /* extends \Predis\Client */
-    implements ClientInterface, IteratorAggregate
+class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAggregate
 {
     const VERSION = '0.0.1';
 
@@ -284,7 +283,7 @@ class Client /* extends \Predis\Client */
      *
      * @return Pipeline|array
      */
-    public function pipeline(/* arguments */)
+    public function pipeline()
     {
         return $this->sharedContextFactory('createPipeline', func_get_args());
     }
@@ -329,7 +328,7 @@ class Client /* extends \Predis\Client */
      *
      * @return MultiExecTransaction|array
      */
-    public function transaction(/* arguments */)
+    public function transaction()
     {
         return $this->sharedContextFactory('createTransaction', func_get_args());
     }
@@ -342,7 +341,7 @@ class Client /* extends \Predis\Client */
      *
      * @return PubSubConsumer|null
      */
-    public function pubSubLoop(/* arguments */)
+    public function pubSubLoop()
     {
         return $this->sharedContextFactory('createPubSub', func_get_args());
     }
@@ -532,5 +531,4 @@ class Client /* extends \Predis\Client */
             }
         }
     }
-
 }

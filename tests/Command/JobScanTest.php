@@ -9,8 +9,8 @@ class JobScanTest extends CommandTestCase
      */
     public function testFilterArguments()
     {
-        $arguments = [0, 'MATCH', 'key:*', 'COUNT', 5];
-        $expected = [0, 'MATCH', 'key:*', 'COUNT', 5];
+        $arguments = [0, 'COUNT', 5];
+        $expected = [0, 'COUNT', 5];
 
         $command = $this->getCommand();
         $command->setArguments($arguments);

@@ -2,14 +2,18 @@
 
 namespace Predisque\Command;
 
-use Predis\Client;
 use Predis\Command\CommandInterface;
 use Predis\Command\PrefixableCommandInterface;
 use Predisque\Test\DisqueTestCase;
 
 abstract class CommandTestCase extends DisqueTestCase
 {
-
+    /**
+     * Returns the expected command.
+     *
+     * @return CommandInterface|string Instance or FQN of the expected command.
+     */
+    abstract protected function getExpectedCommand();
 
     /**
      * Returns the expected command ID.
@@ -42,13 +46,6 @@ abstract class CommandTestCase extends DisqueTestCase
     }
 
     /**
-     * Returns the expected command.
-     *
-     * @return CommandInterface|string Instance or FQN of the expected command.
-     */
-    abstract protected function getExpectedCommand();
-
-    /**
      * @group disconnected
      */
     public function testRawArguments()
@@ -78,7 +75,7 @@ abstract class CommandTestCase extends DisqueTestCase
      *
      * @return CommandInterface
      */
-    protected function getCommandWithArguments(/* arguments */)
+    protected function getCommandWithArguments()
     {
         return $this->getCommandWithArgumentsArray(func_get_args());
     }
