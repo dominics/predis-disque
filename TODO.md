@@ -28,5 +28,5 @@ QSTAT    | `QueueStatistics`   | &#10004; |          |          |          |
 CLUSTER  | `ServerCluster`     | &#10004; | &#10004; |          |          |
 CONFIG   | `ServerConfig`      | &#10004; |          |          |          |
 DEBUG    | `ServerDebug`       | &#10004; |          |          |          |
-HELLO    | `ServerHello`       | &#10004; |          |          |          |
+HELLO    | `ServerHello`       | &#10004; | &#10004; | &#10004; |          |
 INFO     | `ServerInfo`        | &#10004; | &#10004; |          |          |

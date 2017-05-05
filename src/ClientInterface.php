@@ -14,6 +14,7 @@ use Predisque\Profile\ProfileInterface;
  * @method array show(string $jobId)
  * @method mixed debug($subcommand = null)
  * @method array info($section = null)
+ * @method array hello()
  */
 interface ClientInterface /* extends \Predis\ClientInterface */
 {

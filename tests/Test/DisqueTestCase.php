@@ -4,6 +4,7 @@ namespace Predisque\Test;
 
 use PHPUnit\Framework\TestCase;
 use Predisque\Client;
+use Predisque\JobId;
 use Predisque\Profile\Factory;
 use Predisque\Profile\ProfileInterface;
 

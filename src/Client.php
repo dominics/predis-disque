@@ -31,12 +31,6 @@ use Predisque\Configuration\Options;
  * Our magic methods are documented on Predisque\ClientInterface
  *
  * @see |Predis\Client
- *
- * @method string addJob(string $queueName, string $job, int $msTimeout, array $options = [])
- * @method string delJob(string $jobId, string ...$jobIds)
- * @method array show(string $jobId)
- * @method mixed debug($subcommand = null)
- * @method array info($section = null)
  */
 class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAggregate
 {
@@ -318,32 +312,6 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
     }
 
     /**
-     * Creates a new transaction context and returns it, or returns the results
-     * of a transaction executed inside the optionally provided callable object.
-     *
-     * @param mixed ... Array of options, a callable for execution, or both.
-     *
-     * @return MultiExecTransaction|array
-     */
-    public function transaction()
-    {
-        return $this->sharedContextFactory('createTransaction', func_get_args());
-    }
-
-    /**
-     * Creates a new publish/subscribe context and returns it, or starts its loop
-     * inside the optionally provided callable object.
-     *
-     * @param mixed ... Array of options, a callable for execution, or both.
-     *
-     * @return PubSubConsumer|null
-     */
-    public function pubSubLoop()
-    {
-        return $this->sharedContextFactory('createPubSub', func_get_args());
-    }
-
-    /**
      * Creates a new monitor consumer and returns it.
      *
      * @return MonitorConsumer
@@ -474,49 +442,5 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         }
 
         return $pipeline;
-    }
-
-    /**
-     * Actual transaction context initializer method.
-     *
-     * @param array $options  Options for the context.
-     * @param mixed $callable Optional callable used to execute the context.
-     * @return array|MultiExecTransaction
-     * @throws ServerException
-     * @throws \Predis\CommunicationException
-     * @throws \Predis\Transaction\AbortedMultiExecException
-     */
-    protected function createTransaction(array $options = null, $callable = null)
-    {
-        $transaction = new MultiExecTransaction($this, $options);
-
-        if (isset($callable)) {
-            return $transaction->execute($callable);
-        }
-
-        return $transaction;
-    }
-
-    /**
-     * Actual publish/subscribe context initializer method.
-     *
-     * @param array $options  Options for the context.
-     * @param mixed $callable Optional callable used to execute the context.
-     *
-     * @return PubSubConsumer|null
-     */
-    protected function createPubSub(array $options = null, $callable = null)
-    {
-        $pubsub = new PubSubConsumer($this, $options);
-
-        if (!isset($callable)) {
-            return $pubsub;
-        }
-
-        foreach ($pubsub as $message) {
-            if (call_user_func($callable, $pubsub, $message) === false) {
-                $pubsub->stop();
-            }
-        }
     }
 }
