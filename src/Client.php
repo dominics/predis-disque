@@ -23,16 +23,9 @@ use Predisque\Configuration\Options;
 /**
  * Disque client
  *
- * Based on Predis, and reusing a lot of the implementation. Unfortunately, we have to copy rather a lot
- * of the Client class, because there's no easy way to counteract at-method phpdoc tags. In other words,
- * unless we refuse to implement Predis\ClientInterface, we'll get method completion for commands that
- * won't work with Disque (eww).
- *
- * Our magic methods are documented on Predisque\ClientInterface
- *
- * @see |Predis\Client
+ * Based on Predis, and reusing a lot of the implementation. Our magic methods are documented on Predisque\ClientInterface.
  */
-class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAggregate
+class Client implements ClientInterface, IteratorAggregate
 {
     const VERSION = '0.0.1';
 
@@ -110,16 +103,6 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
             if ($options->defined('aggregate')) {
                 $initializer = $this->getConnectionInitializerWrapper($options->aggregate);
                 $connection = $initializer($parameters, $options);
-            } elseif ($options->defined('replication')) {
-                $replication = $options->replication;
-
-                if ($replication instanceof AggregateConnectionInterface) {
-                    $connection = $replication;
-                    $options->connections->aggregate($connection, $parameters);
-                } else {
-                    $initializer = $this->getConnectionInitializerWrapper($replication);
-                    $connection = $initializer($parameters, $options);
-                }
             } else {
                 $connection = $options->cluster;
                 $options->connections->aggregate($connection, $parameters);
