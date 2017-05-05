@@ -19,39 +19,12 @@ class ClientTest extends DisqueTestCase
         $this->assertClientDefaults($client = new Client());
     }
 
-    protected function assertClientDefaults(Client $client)
-    {
-        $connection = $client->getConnection();
-        $this->assertInstanceOf(NodeConnectionInterface::class, $connection);
-
-        $parameters = $connection->getParameters();
-        $this->assertSame($parameters->host, '127.0.0.1');
-        $this->assertSame($parameters->port, 7711);
-
-        $options = $client->getOptions();
-        $this->assertSame($options->profile->getVersion(), Factory::getDefault()->getVersion());
-
-        $this->assertFalse($client->isConnected());
-    }
-
     /**
      * @group disconnected
      */
     public function testConstructorSingleString()
     {
         $this->assertClientDefaults($client = new Client('tcp://127.0.0.1:7711'));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testConstructorMultipleString()
-    {
-        $this->assertClientDefaults($client = new Client([
-            'tcp://127.0.0.1:7711',
-            'tcp://127.0.0.1:7712',
-            'tcp://127.0.0.1:7713',
-        ]));
     }
 
     /**
@@ -76,6 +49,17 @@ class ClientTest extends DisqueTestCase
         ]);
 
         $client->connect();
+        $this->assertTrue($client->isConnected());
+    }
+
+    /**
+     * @group connected
+     */
+    public function testConstructorSingleStringConnect()
+    {
+        $client = new Client('tcp://127.0.0.1:7711');
+        $client->connect();
+        $this->assertTrue($client->isConnected());
     }
 
     /**
@@ -90,14 +74,21 @@ class ClientTest extends DisqueTestCase
         ]);
 
         $client->connect();
+        $this->assertTrue($client->isConnected());
     }
 
-    /**
-     * @group connected
-     */
-    public function testConstructorSingleStringConnect()
+    protected function assertClientDefaults(Client $client)
     {
-        $client = new Client('tcp://127.0.0.1:7711');
-        $client->connect();
+        $connection = $client->getConnection();
+        $this->assertInstanceOf(NodeConnectionInterface::class, $connection);
+
+        $parameters = $connection->getParameters();
+        $this->assertSame($parameters->host, '127.0.0.1');
+        $this->assertSame($parameters->port, 7711);
+
+        $options = $client->getOptions();
+        $this->assertSame($options->profile->getVersion(), Factory::getDefault()->getVersion());
+
+        $this->assertFalse($client->isConnected());
     }
 }
