@@ -8,47 +8,25 @@
 4. Command implementation is considered finished
 
 Command  | Class               | 1 | 2 | 3 | 4
--------- | -----------------   | ----- | ----- | ----- | ----- |
-ACKJOB   | `JobAck`            | * [x] | * [x] |       |       |
-ADDJOB   | `JobAdd`            | * [x] | * [x] | * [x] |       |
-DELJOB   | `JobDelete`         | * [x] | * [x] | * [x] |       |
-DEQUEUE  | `JobDequeue`        | * [x] | * [x] |       |       |
-ENQUEUE  | `JobEnqueue`        | * [x] | * [x] |       |       |
-FASTACK  | `JobFastAck`        | * [x] | * [x] |       |       |
-GETJOB   | `JobGet`            | * [x] | * [x] | * [x] |       |
-SHOW     | `JobShow`           | * [x] | * [x] |       |       |
-WORKING  | `JobWorking`        | * [x] |       |       |       |
-JSCAN    | `JobScan`           | * [x] | * [x] |       |       |
-NACK     | `JobNack`           | * [x] |       |       |       |
-PAUSE    | `QueuePause`        | * [x] |       |       |       |
-QLEN     | `QueueLength`       | * [x] | * [x] | * [x] |       |
-QPEEK    | `QueuePeek`         | * [x] | * [x] |       |       |
-QSCAN    | `QueueScan`         | * [x] | * [x] |       |       |
-QSTAT    | `QueueStatistics`   | * [x] |       |       |       |
-CLUSTER  | `ServerCluster`     | * [x] | * [x] |       |       |
-CONFIG   | `ServerConfig`      | * [x] |       |       |       |
-DEBUG    | `ServerDebug`       | * [x] |       |       |       |
-HELLO    | `ServerHello`       | * [x] |       |       |       |
-INFO     | `ServerInfo`        | * [x] | * [x] |       |       |
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+-------- | -----------------   | -------- | -------- | -------- | -------- |
+ACKJOB   | `JobAck`            | &#10004; | &#10004; |          |          |
+ADDJOB   | `JobAdd`            | &#10004; | &#10004; | &#10004; |          |
+DELJOB   | `JobDelete`         | &#10004; | &#10004; | &#10004; |          |
+DEQUEUE  | `JobDequeue`        | &#10004; | &#10004; |          |          |
+ENQUEUE  | `JobEnqueue`        | &#10004; | &#10004; |          |          |
+FASTACK  | `JobFastAck`        | &#10004; | &#10004; |          |          |
+GETJOB   | `JobGet`            | &#10004; | &#10004; | &#10004; |          |
+SHOW     | `JobShow`           | &#10004; | &#10004; |          |          |
+WORKING  | `JobWorking`        | &#10004; |          |          |          |
+JSCAN    | `JobScan`           | &#10004; | &#10004; |          |          |
+NACK     | `JobNack`           | &#10004; |          |          |          |
+PAUSE    | `QueuePause`        | &#10004; |          |          |          |
+QLEN     | `QueueLength`       | &#10004; | &#10004; | &#10004; |          |
+QPEEK    | `QueuePeek`         | &#10004; | &#10004; |          |          |
+QSCAN    | `QueueScan`         | &#10004; | &#10004; |          |          |
+QSTAT    | `QueueStatistics`   | &#10004; |          |          |          |
+CLUSTER  | `ServerCluster`     | &#10004; | &#10004; |          |          |
+CONFIG   | `ServerConfig`      | &#10004; |          |          |          |
+DEBUG    | `ServerDebug`       | &#10004; |          |          |          |
+HELLO    | `ServerHello`       | &#10004; |          |          |          |
+INFO     | `ServerInfo`        | &#10004; | &#10004; |          |          |
