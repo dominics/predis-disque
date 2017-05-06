@@ -2,6 +2,8 @@
 
 namespace Predisque\Connection\Aggregate;
 
+use Predis\Connection\ConnectionException;
+use Predis\Connection\NodeConnectionInterface;
 use Predisque\Connection\Factory;
 use Predisque\Test\DisqueTestCase;
 
@@ -24,18 +26,43 @@ class DisqueClusterTest extends DisqueTestCase
         $this->factory = $this->createMock(Factory::class);
 
         $this->cluster = new DisqueCluster(
-            $this->factory
+            $this->factory,
+            false
         );
     }
 
     /**
-     * @expectedException \Predisque\ClientException
+     * @expectedException        \Predisque\ClientException
      * @expectedExceptionMessage The pool of connections is empty
      * @group                    disconnected
      */
     public function testConnectNoConnections()
     {
         $this->cluster->connect();
+    }
+
+    /**
+     * @group disconnected
+     */
+    public function testConnectRetry()
+    {
+        $bad1 = $this->getBadConnection();
+        $bad2 = $this->getBadConnection();
+        $bad3 = $this->getBadConnection();
+        $bad4 = $this->getBadConnection();
+        $good = $this->getGoodConnection();
+
+        $this->cluster->add($bad1);
+        $this->cluster->add($bad2);
+        $this->cluster->add($good);
+        $this->cluster->add($bad3);
+        $this->cluster->add($bad4);
+
+        $this->cluster->connect();
+
+        $inner = $this->cluster->getConnection();
+
+        $this->assertEquals($inner, $good);
     }
 
     /**
@@ -53,4 +80,5 @@ class DisqueClusterTest extends DisqueTestCase
 
         $this->assertInstanceOf(DisqueCluster::class, $connection);
     }
+
 }

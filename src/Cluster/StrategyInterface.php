@@ -19,7 +19,7 @@ interface StrategyInterface
      * Pick a set of connection parameters to use from a HELLO response
      *
      * @param array $nodes Response from HELLO: array of arrays, [[string $id, string $host, int $port, int $priority]]
-     * @return Parameters The connection parameters to use for the next connection to this cluster
+     * @return null|Parameters The connection parameters to use for the next connection to this cluster
      */
-    public function pickNodeFromHello(array $nodes): Parameters;
+    public function pickNodeFromHello(array $nodes): ?Parameters;
 }

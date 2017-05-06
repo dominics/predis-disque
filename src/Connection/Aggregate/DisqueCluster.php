@@ -30,8 +30,9 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     /**
      * The currently selected connection, if there is one
      *
-     * If there isn't, call getConnection() and the strategy will be consulted to pull one from the pool
+     * If there isn't, call getConnection() and we'll decide on one
      *
+     * @see getConnection
      * @var null|NodeConnectionInterface
      */
     private $selected = null;
@@ -44,11 +45,18 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     private $selectedId = null;
 
     /**
-     * Node connection details for other nodes in the cluster
+     * Node connection details for other nodes in the cluster that we haven't tried yet
      *
-     * @var Parameters[] indexed by string nodeId
+     * @var null|Parameters[] indexed by string nodeId
      */
-    private $clusterNodes = [];
+    private $clusterNodes = null;
+
+    /**
+     * Node connection details that we tried and didn't work
+     *
+     * @var Parameters[]
+     */
+    private $clusterFailedNodes = [];
 
     /**
      * Connection instances that can be used for an initial HELLO or to run a command on all nodes in a cluster
@@ -81,9 +89,9 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
      * @param bool              $autodiscover
      * @param StrategyInterface $strategy          Optional cluster strategy.
      */
-    public function __construct(FactoryInterface $connectionFactory, bool $autodiscover = true, StrategyInterface $strategy = null)
+    public function __construct(FactoryInterface $connectionFactory = null, bool $autodiscover = true, StrategyInterface $strategy = null)
     {
-        $this->connectionFactory = $connectionFactory;
+        $this->connectionFactory = $connectionFactory ?? new Factory();
         $this->autodiscover = $autodiscover;
         $this->strategy = $strategy ?? new RandomStrategy();
     }
@@ -121,7 +129,7 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
      * information at some point - useful to work around shared-nothing)
      *
      * One invariant is that connect() should either throw an exception, or ->selected should contain a valid, connected
-     * NodeConnectionInterface when it returns. (It is NOT guaranteed that
+     * NodeConnectionInterface when it returns.
      */
     public function connect(): void
     {
@@ -136,7 +144,7 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         try {
             $this->selected->connect();
 
-            if ($this->autodiscover) {
+            if ($this->autodiscover && $this->isConnected()) {
                 $this->discover();
             }
         } catch (BaseConnectionException $e) {
@@ -170,6 +178,10 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     public function executeCommandOnCluster(CommandInterface $command)
     {
         $responses = [];
+
+        if ($this->clusterNodes === null) {
+            $this->discover();
+        }
 
         foreach ($this->clusterNodes as $parameters) {
             $connection = $this->findOrCreateConnection($parameters);
@@ -207,7 +219,13 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Returns the current connection that we're using
+     * Returns the current connection that we're using, deciding on one if there isn't one
+     *
+     * The algorithm is:
+     *   - If we already have a selected connection, that's the one to use
+     *   - If we don't, but we have done discovery, try one of the nodes from the HELLO response we haven't tried yet
+     *   -
+     *
      *
      * @param CommandInterface $_unused
      * @return null|NodeConnectionInterface
@@ -215,7 +233,7 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     public function getConnection(CommandInterface $_unused = null): ?NodeConnectionInterface
     {
         if (!$this->selected) {
-            $this->selected = $this->strategy->pickInitialConnection($this->pool);
+            $this->selected = $this->getNextConnection()->current();
         }
 
         return $this->selected;
@@ -246,7 +264,17 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         }
 
         if ($this->selected === $connection) {
-            $this->reset();
+            $this->resetSelected();
+        }
+
+        // Remove matching clusterNode entries so we don't retry this node from discovery later
+        foreach ($this->clusterNodes ?? [] as $id => $node) {
+            $p = $connection->getParameters();
+
+            if ($node[1] === $p->host && $node[2] == $p->port) {
+                $this->clusterFailedNodes[$id] = $this->clusterNodes[$id];
+                unset($this->clusterNodes[$id]);
+            }
         }
 
         return $removed;
@@ -296,14 +324,20 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
      * The upshot is that you should make sure all addresses in the HELLO output are addressable and can be connected
      * to by every client (because any of them may be swapped to after a -LEAVING error response for example).
      *
+     * Discover will always set clusterNodes from null to an array
+     *
      * @throws ClientException
      * @internal param NodeConnectionInterface $connection
      */
     public function discover(): void
     {
-        if (!$this->isConnected()) {
-            throw new ClientException('Client should be connected before calling discover');
+        if (!$this->isConnected() && $this->clusterNodes = null) {
+            // protect against recursion here if autodiscovery is on
+            $this->clusterNodes = [];
+            $this->connect();
         }
+
+        $this->clusterNodes = [];
 
         $hello = new ServerHello();
 
@@ -325,10 +359,46 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     /**
      * Reset the currently selected connection
      */
-    protected function reset(): void
+    protected function resetSelected(): void
     {
         $this->selected = null;
         $this->selectedId = null;
+    }
+
+    public function reset()
+    {
+        $this->resetSelected();
+        $this->clusterNodes = null;
+        $this->clusterFailedNodes = [];
+    }
+
+    protected function hasCompletedDiscovery(): bool
+    {
+        return $this->clusterNodes !== null;
+    }
+
+    /**
+     * Gets the connection that should be used if $this->current was to go away
+     *
+     * Returns a generator of NodeConnectionInterface
+     *
+     * @return \Generator
+     */
+    protected function getNextConnection(): \Generator
+    {
+        if ($this->selected && !$this->hasCompletedDiscovery()) {
+            $this->discover();
+        }
+
+        if ($this->hasCompletedDiscovery() && count($this->clusterNodes)) {
+            // If we have completed discovery, and we have parameters we haven't tried yet, we use those
+            while ($parameters = $this->strategy->pickNodeFromHello($this->clusterNodes)) {
+                yield $this->findOrCreateConnection($parameters);
+            }
+        }
+
+        // Otherwise try our existing pool of connections
+        yield from $this->pool;
     }
 
     private function findOrCreateConnection(Parameters $parameters): NodeConnectionInterface
@@ -344,7 +414,7 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         $connection = $this->connectionFactory->create($parameters);
 
         if (!$connection) {
-            throw new ClientException('Cannot create conncetion to cluster node');
+            throw new ClientException('Cannot create connection to cluster node');
         }
 
         $this->add($connection);

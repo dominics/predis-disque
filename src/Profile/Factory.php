@@ -7,7 +7,7 @@ use Predis\ClientException;
 /**
  * Factory class for creating profile instances from strings.
  */
-final class Factory
+class Factory
 {
     private static $profiles = array(
         '1.0' => DisqueVersion100::class,

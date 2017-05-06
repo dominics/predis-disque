@@ -33,8 +33,8 @@
 
     <php>
         <!-- Disque -->
-        <const name="DISQUE_SERVER_VERSION" value="1.0" />
-        <const name="DISQUE_SERVER_HOST" value="127.0.0.1" />
-        <const name="DISQUE_SERVER_PORT" value="7711" />
+        <env name="DISQUE_SERVER_VERSION" value="1.0" />
+        <env name="DISQUE_SERVER_HOST" value="127.0.0.1" />
+        <!-- <env name="DISQUE_SERVER_PORT" value="7711" /> Prevent accidents, uses 12345 in absence of env var -->
     </php>
 </phpunit>

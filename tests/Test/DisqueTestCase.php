@@ -3,7 +3,10 @@
 namespace Predisque\Test;
 
 use PHPUnit\Framework\TestCase;
+use Predis\Connection\NodeConnectionInterface;
 use Predisque\Client;
+use Predisque\Connection\ConnectionException;
+use Predisque\Connection\Parameters;
 use Predisque\Profile\Factory;
 use Predisque\Profile\ProfileInterface;
 
@@ -44,8 +47,8 @@ abstract class DisqueTestCase extends TestCase
     {
         return [
             'scheme' => 'tcp',
-            'host' => DISQUE_SERVER_HOST,
-            'port' => DISQUE_SERVER_PORT,
+            'host' => getenv('DISQUE_SERVER_HOST'),
+            'port' => getenv('DISQUE_SERVER_PORT') ?: '12345' // Prevent accidents,
         ];
     }
 
@@ -57,7 +60,7 @@ abstract class DisqueTestCase extends TestCase
     protected function getDefaultOptionsArray()
     {
         return [
-            'profile' => DISQUE_SERVER_VERSION,
+            'profile' => getenv('DISQUE_SERVER_VERSION'),
         ];
     }
 
@@ -70,7 +73,7 @@ abstract class DisqueTestCase extends TestCase
      */
     protected function getProfile($version = null): ProfileInterface
     {
-        return Factory::get($version ?: DISQUE_SERVER_VERSION);
+        return Factory::get($version ?: getenv('DISQUE_SERVER_VERSION'));
     }
 
     /**
@@ -104,5 +107,55 @@ abstract class DisqueTestCase extends TestCase
         }
 
         return $client;
+    }
+
+
+
+    /**
+     * @return NodeConnectionInterface|\PHPUnit_Framework_MockObject_MockObject
+     */
+    protected function getBadConnection(): NodeConnectionInterface
+    {
+        $connection = $this->createMock(NodeConnectionInterface::class);
+
+        $connection->expects($this->any())
+            ->method('connect')
+            ->willThrowException(new ConnectionException($connection));
+
+        return $connection;
+    }
+
+    /**
+     * @return NodeConnectionInterface|\PHPUnit_Framework_MockObject_MockObject
+     */
+    protected function getGoodConnection(string $host = '127.0.0.1', int $port = 7711): NodeConnectionInterface
+    {
+        $connection = $this->createMock(NodeConnectionInterface::class);
+
+        $connection->expects($this->any())
+            ->method('getParameters')
+            ->willReturn(new Parameters([
+                'host' => $host,
+                'port' => $port,
+            ]));
+
+        $connection->expects($this->any())
+            ->method('isConnected')
+            ->willReturn(true);
+
+        return $connection;
+    }
+
+    protected function registerResponse($connection, $response, int $times = 1)
+    {
+        if (!isset($connection->responseIndex)) {
+            $connection->responseIndex = 0;
+        }
+
+        for ($i = $times; $i > 0; $i--) {
+            $connection->expects($this->at($connection->responseIndex++))
+                ->method('executeCommand')
+                ->willReturn($response);
+        }
     }
 }
