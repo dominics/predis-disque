@@ -2,6 +2,9 @@
 
 ## Commands
 
+Here's the current state of command support. Predis has solid support for the whole protocol, so even
+where a command isn't specifically tested, you should be able to predict what the responses will look like.
+
 1. Initial implementation. Command is there, but may or may not work.
 2. Command has initial test coverage.
 3. Command has test coverage that makes sense, including a connected (functional) test

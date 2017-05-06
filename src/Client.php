@@ -9,7 +9,6 @@ use Predis\Command\ScriptCommand;
 use Predis\Configuration\OptionsInterface;
 use Predis\Connection\AggregateConnectionInterface;
 use Predis\Connection\ConnectionInterface;
-use Predis\Connection\ParametersInterface;
 use Predis\Monitor\Consumer as MonitorConsumer;
 use Predis\NotSupportedException;
 use Predis\Pipeline\Pipeline;
@@ -19,20 +18,16 @@ use Predis\Response\ResponseInterface;
 use Predis\Response\ServerException;
 use Predis\Transaction\MultiExec as MultiExecTransaction;
 use Predisque\Configuration\Options;
+use Predisque\Connection\Aggregate\ClusterInterface;
+use Predisque\Connection\Aggregate\DisqueCluster;
+use Predisque\Connection\Parameters;
 
 /**
  * Disque client
  *
- * Based on Predis, and reusing a lot of the implementation. Unfortunately, we have to copy rather a lot
- * of the Client class, because there's no easy way to counteract at-method phpdoc tags. In other words,
- * unless we refuse to implement Predis\ClientInterface, we'll get method completion for commands that
- * won't work with Disque (eww).
- *
- * Our magic methods are documented on Predisque\ClientInterface
- *
- * @see |Predis\Client
+ * Based on Predis, and reusing a lot of the implementation. Our magic methods are documented on Predisque\ClientInterface.
  */
-class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAggregate
+class Client implements ClientInterface, IteratorAggregate
 {
     const VERSION = '0.0.1';
 
@@ -80,8 +75,8 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
      *
      * Accepted types for connection parameters are:
      *
-     *  - Instance of Predis\Connection\ConnectionInterface.
-     *  - Instance of Predis\Connection\ParametersInterface.
+     *  - Instance of Predisque\Connection\ConnectionInterface.
+     *  - Instance of Predisque\Connection\Parameters
      *  - Array
      *  - String
      *  - Callable
@@ -92,40 +87,38 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
      */
     protected function createConnection($parameters)
     {
+        if (is_array($parameters)) {
+            $parameters = array_merge($parameters); // For renumbering side-effect
+        }
+
+
+
+        $options = $this->options;
+
         if ($parameters instanceof ConnectionInterface) {
             return $parameters;
         }
 
-        if ($parameters instanceof ParametersInterface || is_string($parameters)) {
-            return $this->options->connections->create($parameters);
+        if ($options->cluster === false) {
+            return $options->connections->create($parameters);
+        }
+
+        if ($parameters instanceof Parameters || is_string($parameters) || !isset($parameters[0])) {
+            return $this->createClusterConnection([$parameters]);
         }
 
         if (is_array($parameters)) {
-            if (!isset($parameters[0])) {
-                return $this->options->connections->create($parameters);
+            $cluster = $options->cluster;
+
+            if (!count($parameters)) {
+                $parameters = [new Parameters()];
             }
 
-            $options = $this->options;
-
-            if ($options->defined('aggregate')) {
-                $initializer = $this->getConnectionInitializerWrapper($options->aggregate);
-                $connection = $initializer($parameters, $options);
-            } elseif ($options->defined('replication')) {
-                $replication = $options->replication;
-
-                if ($replication instanceof AggregateConnectionInterface) {
-                    $connection = $replication;
-                    $options->connections->aggregate($connection, $parameters);
-                } else {
-                    $initializer = $this->getConnectionInitializerWrapper($replication);
-                    $connection = $initializer($parameters, $options);
-                }
-            } else {
-                $connection = $options->cluster;
-                $options->connections->aggregate($connection, $parameters);
+            if ($cluster instanceof ClusterInterface) {
+                return $this->createClusterConnection($parameters, $cluster);
             }
 
-            return $connection;
+            return $this->createClusterConnection($parameters);
         }
 
         if (is_callable($parameters)) {
@@ -136,6 +129,17 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         }
 
         throw new \InvalidArgumentException('Invalid type for connection parameters.');
+    }
+
+    protected function createClusterConnection(array $parameters, ?ClusterInterface $connection = null): ClusterInterface
+    {
+        if (!$connection) {
+            $connection = new DisqueCluster($this->options->connections);
+        }
+
+        $this->options->connections->aggregate($connection, $parameters);
+
+        return $connection;
     }
 
     /**
@@ -196,9 +200,9 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
      */
     public function getConnectionById($connectionID)
     {
-        if (!$this->connection instanceof AggregateConnectionInterface) {
+        if (!$this->connection instanceof ClusterInterface) {
             throw new NotSupportedException(
-                'Retrieving connections by ID is supported only by aggregate connections.'
+                'Retrieving connections by ID is supported only by Disque clustered connections.'
             );
         }
 
@@ -337,7 +341,7 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
         return new \ArrayIterator($clients);
     }
 
-    public function getConnection()
+    public function getConnection(): ConnectionInterface
     {
         return $this->connection;
     }
@@ -350,7 +354,7 @@ class Client /* extends \Predis\Client */ implements ClientInterface, IteratorAg
     /**
      * Opens the underlying connection and connects to the server.
      */
-    public function connect()
+    public function connect(): void
     {
         $this->connection->connect();
     }

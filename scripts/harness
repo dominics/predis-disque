@@ -7,6 +7,8 @@ set -o pipefail
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source ${DIR}/_common
 
+rm -rf ${DIR}/../build/ready
+
 RUN_ID=$(date +%Y%m%d%H%M%S)
 BUILD_DIR="${DIR}/../build/${RUN_ID}"
 BIND=${DISQUE_SERVER_HOST:-127.0.0.1}
@@ -39,28 +41,18 @@ function finish {
   set +e
   echo "Shutting down..." >&2
 
-  echo "Setting custer leaving state..." >&2
-
-  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_1
-  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_2
-  echo "CLUSTER LEAVING yes" | ${DISQUE} -h $BIND -p $PORT_3
-
-  echo "Waiting a bit..." >&2
-
   sleep 5
 
-  echo "Running forget across nodes..." >&2
+  echo "Running flushall and cluster reset across nodes..." >&2
 
-  RUN_ID_1=$(${DISQUE} -h $BIND -p $PORT_1 info | grep run_id | cut -d : -f 2)
-  RUN_ID_2=$(${DISQUE} -h $BIND -p $PORT_2 info | grep run_id | cut -d : -f 2)
-  RUN_ID_3=$(${DISQUE} -h $BIND -p $PORT_3 info | grep run_id | cut -d : -f 2)
+  echo "CLUSTER RESET" | ${DISQUE} -h $BIND -p ${PORT_1}
+  echo "DEBUG FLUSHALL" | ${DISQUE} -h $BIND -p ${PORT_1}
 
-  echo "CLUSTER FORGET $RUN_ID_1" | ${DISQUE} -h $BIND -p ${PORT_2}
-  echo "CLUSTER FORGET $RUN_ID_1" | ${DISQUE} -h $BIND -p ${PORT_3}
-  echo "CLUSTER FORGET $RUN_ID_2" | ${DISQUE} -h $BIND -p ${PORT_1}
-  echo "CLUSTER FORGET $RUN_ID_2" | ${DISQUE} -h $BIND -p ${PORT_3}
-  echo "CLUSTER FORGET $RUN_ID_3" | ${DISQUE} -h $BIND -p ${PORT_1}
-  echo "CLUSTER FORGET $RUN_ID_3" | ${DISQUE} -h $BIND -p ${PORT_2}
+  echo "CLUSTER RESET" | ${DISQUE} -h $BIND -p ${PORT_2}
+  echo "DEBUG FLUSHALL" | ${DISQUE} -h $BIND -p ${PORT_2}
+
+  echo "CLUSTER RESET" | ${DISQUE} -h $BIND -p ${PORT_3}
+  echo "DEBUG FLUSHALL" | ${DISQUE} -h $BIND -p ${PORT_3}
 
   echo "Killing PIDs..." >&2
 
@@ -86,12 +78,18 @@ echo "Servers are { $SERVER_PID_1, $SERVER_PID_2, $SERVER_PID_3 }"
 sleep 1
 
 echo "Introducing..."
+${DISQUE} -p $PORT_1 cluster reset
+${DISQUE} -p $PORT_1 cluster leaving no
 ${DISQUE} -p $PORT_1 cluster meet $BIND $PORT_2
 ${DISQUE} -p $PORT_1 cluster meet $BIND $PORT_3
 
+${DISQUE} -p $PORT_2 cluster reset
+${DISQUE} -p $PORT_2 cluster leaving no
 ${DISQUE} -p $PORT_2 cluster meet $BIND $PORT_1
 ${DISQUE} -p $PORT_2 cluster meet $BIND $PORT_3
 
+${DISQUE} -p $PORT_3 cluster reset
+${DISQUE} -p $PORT_3 cluster leaving no
 ${DISQUE} -p $PORT_3 cluster meet $BIND $PORT_1
 ${DISQUE} -p $PORT_3 cluster meet $BIND $PORT_2
 
@@ -111,6 +109,9 @@ echo "Adding jobs to all 3 running nodes"
 ${DISQUE} -h $BIND -p $PORT_1 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
 ${DISQUE} -h $BIND -p $PORT_2 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
 ${DISQUE} -h $BIND -p $PORT_3 ADDJOB ${TEST_QUEUE} ${TEST_JOB} 10000
+
+echo "Signalling ready"
+touch ${DIR}/../build/ready
 
 echo "Waiting for shutdown signal"
 wait

@@ -2,6 +2,6 @@
 
 namespace Predisque;
 
-class ClientException extends PredisqueException
+class ClientException extends \Predis\ClientException implements PredisqueException
 {
 }

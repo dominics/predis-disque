@@ -13,6 +13,8 @@ class Options extends PredisOptions
             'connections' => ConnectionFactoryOption::class,
             'exceptions' => ExceptionsOption::class,
             'profile' => ProfileOption::class,
+            'cluster' => ClusterOption::class,
+            'discover' => DiscoverOption::class,
         ];
     }
 }

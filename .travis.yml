@@ -9,12 +9,10 @@ install:
   - composer install
   - cp phpunit.xml.dist phpunit.xml
 
-before_script:
-  - scripts/harness &
+script: scripts/travis
 
-script: |
-         ./vendor/bin/phpunit \
-           --coverage-clover=build/coverage.clover
+
+
 
 after_script:
   - ./scripts/ocular code-coverage:upload --format=php-clover build/coverage.clover
