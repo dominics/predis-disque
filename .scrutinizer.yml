@@ -14,7 +14,6 @@ checks:
             verify_parent_constraints: true
         avoid_todo_comments: true
         avoid_fixme_comments: true
-        align_assignments: true
         avoid_multiple_statements_on_same_line: true
         avoid_perl_style_comments: true
         fix_line_ending: true

@@ -34,11 +34,15 @@ interface ClientInterface /* extends \Predis\ClientInterface */
 
     /**
      * Opens the underlying connection to the server.
+     *
+     * @return void
      */
     public function connect();
 
     /**
      * Closes the underlying connection from the server.
+     *
+     * @return void
      */
     public function disconnect();
 

@@ -9,7 +9,7 @@ class RandomStrategy implements StrategyInterface
 {
     /**
      * @param array $nodes
-     * @return ?Parameters
+     * @return Parameters|null
      */
     public function pickNodeFromHello(array $nodes): ?Parameters
     {
