@@ -22,6 +22,8 @@ use Predisque\Connection\Aggregate\ClusterInterface;
 use Predisque\Connection\Aggregate\DisqueCluster;
 use Predisque\Connection\Parameters;
 
+/** @noinspection PhpHierarchyChecksInspection */
+
 /**
  * Disque client
  *
@@ -90,8 +92,6 @@ class Client implements ClientInterface, IteratorAggregate
         if (is_array($parameters)) {
             $parameters = array_merge($parameters); // For renumbering side-effect
         }
-
-
 
         $options = $this->options;
 
