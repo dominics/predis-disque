@@ -10,5 +10,5 @@ interface StrategyInterface
      * @param array $nodes
      * @return NodeConnectionInterface
      */
-    public function selectInitialNode(array $nodes): NodeConnectionInterface;
+    public function pickNode(array $nodes): NodeConnectionInterface;
 }
