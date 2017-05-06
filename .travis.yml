@@ -9,11 +9,10 @@ install:
   - composer install
   - cp phpunit.xml.dist phpunit.xml
 
-script: |
-          scripts/harness &
-          build/cache/disque-1.0-rc1/src/disque hello # debugging
-         ./vendor/bin/phpunit \
-           --coverage-clover=build/coverage.clover
+script: scripts/travis
+
+
+
 
 after_script:
   - ./scripts/ocular code-coverage:upload --format=php-clover build/coverage.clover

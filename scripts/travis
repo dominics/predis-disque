@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+set -x
+set -o pipefail
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+source ${DIR}/_common
+
+rm -rf build/ready
+scripts/harness &
+
+echo "Waiting for test harness to be ready...."
+
+i=0
+while [[ ! -f build/ready && $i -lt 20 ]]; do
+    echo -n "."
+    i=$((i+1))
+
+    if [[ $i -gt 20 ]]; then
+      echo "Timed out waiting for harness to be ready" >&2
+      exit 2
+    fi
+
+    sleep 2
+done
+
+echo "Test harness is ready, proceeding with tests"
+
+$DISQUE hello
+
+./vendor/bin/phpunit \
+    --coverage-clover=build/coverage.clover
