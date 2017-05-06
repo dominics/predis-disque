@@ -46,6 +46,8 @@ coding_style:
                 closure_definition: true
             other:
                 after_type_cast: false
+            around_operators:
+                concatenation: true
         upper_lower_casing:
             keywords:
                 general: lower
