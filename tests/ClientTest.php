@@ -3,6 +3,8 @@
 namespace Predisque;
 
 use Predis\Connection\NodeConnectionInterface;
+use Predis\Connection\StreamConnection;
+use Predisque\Connection\Aggregate\DisqueCluster;
 use Predisque\Profile\Factory;
 use Predisque\Test\DisqueTestCase;
 
@@ -11,84 +13,62 @@ use Predisque\Test\DisqueTestCase;
  */
 class ClientTest extends DisqueTestCase
 {
-    /**
-     * @group disconnected
-     */
-    public function testConstructorWithoutArguments()
+    public function defaultClientConstructorArguments(): iterable
     {
-        $this->assertClientDefaults($client = new Client());
-    }
+        yield [null, null, 'no arguments'];
 
-    /**
-     * @group disconnected
-     */
-    public function testConstructorSingleString()
-    {
-        $this->assertClientDefaults($client = new Client('tcp://127.0.0.1:7711'));
-    }
-
-    /**
-     * @group disconnected
-     */
-    public function testConstructorArray()
-    {
-        $this->assertClientDefaults($client = new Client([
+        yield [[
             'host' => '127.0.0.1',
             'port' => 7711,
-        ]));
-    }
+        ], null, 'detail array'];
 
-    /**
-     * @group connected
-     */
-    public function testConstructorArrayConnect()
-    {
-        $client = new Client([
-            'host' => '127.0.0.1',
-            'port' => 7711,
-        ]);
+        yield ['tcp://127.0.0.1:7711', null, 'single string'];
 
-        $client->connect();
-        $this->assertTrue($client->isConnected());
-    }
+        yield [['tcp://127.0.0.1:7711'], null, 'single string in array'];
 
-    /**
-     * @group connected
-     */
-    public function testConstructorSingleStringConnect()
-    {
-        $client = new Client('tcp://127.0.0.1:7711');
-        $client->connect();
-        $this->assertTrue($client->isConnected());
-    }
-
-    /**
-     * @group connected
-     */
-    public function testConstructorMultipleStringConnect()
-    {
-        $client = new Client([
+        yield [[
             'tcp://127.0.0.1:7711',
             'tcp://127.0.0.1:7712',
             'tcp://127.0.0.1:7713',
-        ]);
-
-        $client->connect();
-        $this->assertTrue($client->isConnected());
+        ], null, 'multiple strings'];
     }
 
-    protected function assertClientDefaults(Client $client)
+    /**
+     * @dataProvider defaultClientConstructorArguments
+     * @group disconnected
+     */
+    public function testConstructorDefaultDisconnected($parameters, $options, string $case)
     {
-        $connection = $client->getConnection();
-        $this->assertInstanceOf(NodeConnectionInterface::class, $connection);
+        $client = new Client($parameters, $options);
 
-        $parameters = $connection->getParameters();
-        $this->assertSame($parameters->host, '127.0.0.1');
-        $this->assertSame($parameters->port, 7711);
+        /**
+         * @var DisqueCluster $connection
+         */
+        $connection = $client->getConnection();
+
+        $this->assertInstanceOf(DisqueCluster::class, $client->getConnection(), $case . ' should produce a DisqueCluster');
+        $this->assertFalse($client->isConnected(), $case . ' should not cause connection immediately');
+
+        $current = $connection->getConnectionById(0);
+        $this->assertInstanceOf(StreamConnection::class, $current);
+
+        $parameters = $current->getParameters();
+        $this->assertSame($parameters->host, '127.0.0.1', $case . ' host is as expected');
+        $this->assertSame($parameters->port, 7711, $case . ' port is as expected');
 
         $options = $client->getOptions();
-        $this->assertSame($options->profile->getVersion(), Factory::getDefault()->getVersion());
+        $this->assertSame($options->profile->getVersion(), Factory::getDefault()->getVersion(), $case . ' uses expected profile');
+    }
 
-        $this->assertFalse($client->isConnected());
+    /**
+     * @dataProvider defaultClientConstructorArguments
+     * @group connected
+     */
+    public function testConstructorDefaultConnected($parameters, $options, string $case)
+    {
+        $client = new Client($parameters, $options);
+        $client->connect();
+
+        $this->assertTrue($client->isConnected(), $case . ' should say client is connected after ->connect()');
     }
 }

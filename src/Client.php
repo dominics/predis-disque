@@ -9,7 +9,6 @@ use Predis\Command\ScriptCommand;
 use Predis\Configuration\OptionsInterface;
 use Predis\Connection\AggregateConnectionInterface;
 use Predis\Connection\ConnectionInterface;
-use Predis\Connection\ParametersInterface;
 use Predis\Monitor\Consumer as MonitorConsumer;
 use Predis\NotSupportedException;
 use Predis\Pipeline\Pipeline;
@@ -19,6 +18,9 @@ use Predis\Response\ResponseInterface;
 use Predis\Response\ServerException;
 use Predis\Transaction\MultiExec as MultiExecTransaction;
 use Predisque\Configuration\Options;
+use Predisque\Connection\Aggregate\ClusterInterface;
+use Predisque\Connection\Aggregate\DisqueCluster;
+use Predisque\Connection\Parameters;
 
 /**
  * Disque client
@@ -73,8 +75,8 @@ class Client implements ClientInterface, IteratorAggregate
      *
      * Accepted types for connection parameters are:
      *
-     *  - Instance of Predis\Connection\ConnectionInterface.
-     *  - Instance of Predis\Connection\ParametersInterface.
+     *  - Instance of Predisque\Connection\ConnectionInterface.
+     *  - Instance of Predisque\Connection\Parameters
      *  - Array
      *  - String
      *  - Callable
@@ -85,30 +87,38 @@ class Client implements ClientInterface, IteratorAggregate
      */
     protected function createConnection($parameters)
     {
+        if (is_array($parameters)) {
+            $parameters = array_merge($parameters); // For renumbering side-effect
+        }
+
+
+
+        $options = $this->options;
+
         if ($parameters instanceof ConnectionInterface) {
             return $parameters;
         }
 
-        if ($parameters instanceof ParametersInterface || is_string($parameters)) {
-            return $this->options->connections->create($parameters);
+        if ($options->cluster === false) {
+            return $options->connections->create($parameters);
+        }
+
+        if ($parameters instanceof Parameters || is_string($parameters) || !isset($parameters[0])) {
+            return $this->createClusterConnection([$parameters]);
         }
 
         if (is_array($parameters)) {
-            if (!isset($parameters[0])) {
-                return $this->options->connections->create($parameters);
+            $cluster = $options->cluster;
+
+            if (!count($parameters)) {
+                $parameters = [new Parameters()];
             }
 
-            $options = $this->options;
-
-            if ($options->defined('aggregate')) {
-                $initializer = $this->getConnectionInitializerWrapper($options->aggregate);
-                $connection = $initializer($parameters, $options);
-            } else {
-                $connection = $options->cluster;
-                $options->connections->aggregate($connection, $parameters);
+            if ($cluster instanceof ClusterInterface) {
+                return $this->createClusterConnection($parameters, $cluster);
             }
 
-            return $connection;
+            return $this->createClusterConnection($parameters);
         }
 
         if (is_callable($parameters)) {
@@ -119,6 +129,17 @@ class Client implements ClientInterface, IteratorAggregate
         }
 
         throw new \InvalidArgumentException('Invalid type for connection parameters.');
+    }
+
+    protected function createClusterConnection(array $parameters, ?ClusterInterface $connection = null): ClusterInterface
+    {
+        if (!$connection) {
+            $connection = new DisqueCluster($this->options->connections);
+        }
+
+        $this->options->connections->aggregate($connection, $parameters);
+
+        return $connection;
     }
 
     /**
@@ -179,9 +200,9 @@ class Client implements ClientInterface, IteratorAggregate
      */
     public function getConnectionById($connectionID)
     {
-        if (!$this->connection instanceof AggregateConnectionInterface) {
+        if (!$this->connection instanceof ClusterInterface) {
             throw new NotSupportedException(
-                'Retrieving connections by ID is supported only by aggregate connections.'
+                'Retrieving connections by ID is supported only by Disque clustered connections.'
             );
         }
 
@@ -320,7 +341,7 @@ class Client implements ClientInterface, IteratorAggregate
         return new \ArrayIterator($clients);
     }
 
-    public function getConnection()
+    public function getConnection(): ConnectionInterface
     {
         return $this->connection;
     }
@@ -333,7 +354,7 @@ class Client implements ClientInterface, IteratorAggregate
     /**
      * Opens the underlying connection and connects to the server.
      */
-    public function connect()
+    public function connect(): void
     {
         $this->connection->connect();
     }

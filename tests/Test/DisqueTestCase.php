@@ -4,7 +4,6 @@ namespace Predisque\Test;
 
 use PHPUnit\Framework\TestCase;
 use Predisque\Client;
-use Predisque\JobId;
 use Predisque\Profile\Factory;
 use Predisque\Profile\ProfileInterface;
 
@@ -14,17 +13,40 @@ use Predisque\Profile\ProfileInterface;
 abstract class DisqueTestCase extends TestCase
 {
     /**
+     * Returns a new client instance.
+     *
+     * @param bool $flushall
+     * @param null $parameters
+     * @param null $options
+     * @return Client
+     */
+    public function getClient($flushall = true, $parameters = null, $options = null)
+    {
+        $profile = $this->getProfile();
+
+        if (method_exists($this, 'getExpectedId') && !$profile->supportsCommand($id = $this->getExpectedId())) {
+            $this->markTestSkipped(
+                "The profile {$profile->getVersion()} does not support command {$id}"
+            );
+        }
+
+        $client = $this->createClient($parameters, $options, $flushall);
+
+        return $client;
+    }
+
+    /**
      * Returns a named array with the default connection parameters and their values.
      *
      * @return array Default connection parameters.
      */
     protected function getDefaultParametersArray()
     {
-        return array(
+        return [
             'scheme' => 'tcp',
             'host' => DISQUE_SERVER_HOST,
             'port' => DISQUE_SERVER_PORT,
-        );
+        ];
     }
 
     /**
@@ -34,9 +56,9 @@ abstract class DisqueTestCase extends TestCase
      */
     protected function getDefaultOptionsArray()
     {
-        return array(
+        return [
             'profile' => DISQUE_SERVER_VERSION,
-        );
+        ];
     }
 
     /**
@@ -64,14 +86,14 @@ abstract class DisqueTestCase extends TestCase
     {
         $parameters = array_merge(
             $this->getDefaultParametersArray(),
-            $parameters ?: array()
+            $parameters ?: []
         );
 
         $options = array_merge(
-            array(
+            [
                 'profile' => $this->getProfile(),
-            ),
-            $options ?: array()
+            ],
+            $options ?: []
         );
 
         $client = new Client($parameters, $options);
@@ -80,28 +102,6 @@ abstract class DisqueTestCase extends TestCase
         if ($flushall) {
             $client->debug('flushall');
         }
-
-        return $client;
-    }
-
-    /**
-     * Returns a new client instance.
-     *
-     * @param bool $flushall
-     * @return Client
-     * @throws \Predis\ClientException
-     */
-    public function getClient($flushall = true)
-    {
-        $profile = $this->getProfile();
-
-        if (!$profile->supportsCommand($id = $this->getExpectedId())) {
-            $this->markTestSkipped(
-                "The profile {$profile->getVersion()} does not support command {$id}"
-            );
-        }
-
-        $client = $this->createClient(null, null, $flushall);
 
         return $client;
     }

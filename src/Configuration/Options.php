@@ -14,6 +14,7 @@ class Options extends PredisOptions
             'exceptions' => ExceptionsOption::class,
             'profile' => ProfileOption::class,
             'cluster' => ClusterOption::class,
+            'discover' => DiscoverOption::class,
         ];
     }
 }

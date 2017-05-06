@@ -7,21 +7,15 @@ use Predis\Configuration\OptionsInterface;
 use Predisque\Connection\Aggregate\ClusterInterface;
 use Predisque\Connection\Aggregate\DisqueCluster;
 
-class ClusterOption implements OptionInterface
+class DiscoverOption implements OptionInterface
 {
     public function filter(OptionsInterface $options, $value)
     {
-        if (is_object($value) && !$value instanceof ClusterInterface) {
-            throw new \InvalidArgumentException(
-                "An instance of type 'Predisque\\Connection\\Aggregate\\ClusterInterface' was expected."
-            );
-        }
-
-        return $value;
+        return (bool)$value;
     }
 
     public function getDefault(OptionsInterface $options)
     {
-        return new DisqueCluster($options->connections);
+        return true;
     }
 }

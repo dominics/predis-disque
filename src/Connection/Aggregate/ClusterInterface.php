@@ -2,30 +2,42 @@
 
 namespace Predisque\Connection\Aggregate;
 
+use Predis\Command\CommandInterface;
 use Predis\Connection\AggregateConnectionInterface;
 use Predis\Connection\NodeConnectionInterface;
 
+/**
+ * Disque cluster interface
+ */
 interface ClusterInterface extends AggregateConnectionInterface
 {
     /**
-     * Use HELLO or a similar method to enumerate the members of the cluster
+     * @param CommandInterface $command
+     * @return mixed
      */
-    public function discover(): void;
-
-    public function pickNode(): NodeConnectionInterface;
+    public function executeCommandOnCluster(CommandInterface $command);
 
     /**
-     * Switches the internal connection instance in use.
+     * @param CommandInterface $command
+     * @return mixed
+     */
+    public function executeCommandOnPool(CommandInterface $command);
+
+    /**
+     * Returns the connection instance in charge for the given command.
      *
-     * @param string|NodeConnectionInterface $connection Alias of a connection
-     */
-    public function switchTo($connection): void;
-
-    /**
-     * Returns the connection instance currently in use by the aggregate
-     * connection.
+     * @param CommandInterface $command Command instance.
      *
      * @return NodeConnectionInterface
      */
-    public function getCurrent(): NodeConnectionInterface;
+    public function getConnection(CommandInterface $command);
+
+    /**
+     * Returns a connection instance from the aggregate connection by its alias.
+     *
+     * @param string $connectionID Connection alias.
+     *
+     * @return NodeConnectionInterface|null
+     */
+    public function getConnectionById($connectionID);
 }

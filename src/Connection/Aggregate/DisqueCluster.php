@@ -4,61 +4,62 @@
 namespace Predisque\Connection\Aggregate;
 
 use Predis\Command\CommandInterface;
+use Predis\Connection\ConnectionException as BaseConnectionException;
+use Predis\Connection\FactoryInterface;
 use Predis\Connection\NodeConnectionInterface;
 use Predis\Response\ErrorInterface as ResponseErrorInterface;
 use Predisque\ClientException;
 use Predisque\Cluster\RandomStrategy;
 use Predisque\Cluster\StrategyInterface;
+use Predisque\Command\ServerHello;
 use Predisque\Connection\ConnectionException;
 use Predisque\Connection\Factory;
+use Predisque\Connection\Parameters;
 
 /**
  * Disque cluster aggregate connection
  *
- * Here's the initial description of what a Disque client should do:
- *
- *   The client should be given a number of IP addresses and ports where nodes are located. The client should select
- *   random nodes and should try to connect until an available one is found. On a successful connection the HELLO
- *   command should be used in order to retrieve the Node ID and other potentially useful information (server version,
- *   number of nodes).
+ * @todo: implement optional server-switching
  *
  *   If a consumer sees a high message rate received from foreign nodes, it may optionally have logic in order to
  *   retrieve messages directly from the nodes where producers are producing the messages for a given topic. The
  *   consumer can easily check the source of the messages by checking the Node ID prefix in the messages IDs.
- *
- *   The GETJOB command, or other commands, may return a -LEAVING error instead of blocking. This error should be
- *   considered by the client library as a request to connect to a different node, since the node it is connected to is
- *   not able to serve the request since it is leaving the cluster. Nodes in this state have a very high priority
- *   number
- *   published via HELLO, so will be unlikely to be picked at the next connection attempt.
- *
- * Here's how we translate that into our connection implementation:
- *
- *   - The aggregate connection gets a list of nodes it should be able to connect to, these
- *     are stored in $pool
- *   - It performs discovery on one of those nodes (selected by the given strategy, default random),
- *     this node is stored in $selected
- *   -
- *   - It merges entries from
  */
 class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
 {
     /**
-     * @var StrategyInterface
-     */
-    private $strategy;
-
-    /**
-     * @var NodeConnectionInterface[]
-     */
-    private $pool;
-
-    /**
-     * @var NodeConnectionInterface
+     * The currently selected connection, if there is one
+     *
+     * If there isn't, call getConnection() and the strategy will be consulted to pull one from the pool
+     *
+     * @var null|NodeConnectionInterface
      */
     private $selected = null;
 
     /**
+     * The nodeId of the currently selected connection according to HELLO
+     *
+     * @var null|string
+     */
+    private $selectedId = null;
+
+    /**
+     * Node connection details for other nodes in the cluster
+     *
+     * @var Parameters[] indexed by string nodeId
+     */
+    private $clusterNodes = [];
+
+    /**
+     * Connection instances that can be used for an initial HELLO or to run a command on all nodes in a cluster
+     *
+     * @var NodeConnectionInterface[] indexed by int
+     */
+    private $pool;
+
+    /**
+     * A connection factory for making individual node connections in the cluster
+     *
      * @var Factory
      */
     private $connectionFactory;
@@ -66,75 +67,157 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     /**
      * @var bool
      */
-    private $autoDiscovery = true;
+    private $autodiscover;
 
     /**
-     * @param StrategyInterface $strategy Optional cluster strategy.
+     * A strategy instance for deciding between nodes
+     *
+     * @var StrategyInterface
      */
-    public function __construct(StrategyInterface $strategy = null)
+    private $strategy;
+
+    /**
+     * @param FactoryInterface  $connectionFactory Connection factory used to create discovered connections
+     * @param bool              $autodiscover
+     * @param StrategyInterface $strategy          Optional cluster strategy.
+     */
+    public function __construct(FactoryInterface $connectionFactory, bool $autodiscover = true, StrategyInterface $strategy = null)
     {
+        $this->connectionFactory = $connectionFactory;
+        $this->autodiscover = $autodiscover;
         $this->strategy = $strategy ?? new RandomStrategy();
     }
 
+    /**
+     * Adds a connection instance to the aggregate connection.
+     *
+     * @param NodeConnectionInterface $connection Connection instance.
+     */
     public function add(NodeConnectionInterface $connection)
     {
-        $parameters = $connection->getParameters();
-
-        if (isset($parameters->alias)) {
-            $this->pool[$parameters->alias] = $connection;
-        } else {
-            $this->pool[] = $connection;
-        }
+        $this->pool[] = $connection;
     }
 
-    public function connect()
+    /**
+     * Connect to a Disque cluster
+     *
+     * Here's the upstream description of what a Disque client should do on connection
+     *
+     *   The client should be given a number of IP addresses and ports where nodes are located. The client should
+     *   select
+     *   random nodes and should try to connect until an available one is found. On a successful connection the HELLO
+     *   command should be used in order to retrieve the Node ID and other potentially useful information (server
+     *   version, number of nodes).
+     *
+     * Here's how we implement that:
+     *
+     *   - $this->pool is initially just the list of connection details given
+     *   - On ->connect(), we select one, and connect to it
+     *   - On an unsuccessful connection, we select another node, until there are none left
+     *   - On a successful connection, we use HELLO and get more information about the cluster, adding it to the pool
+     *     (in case we need to switch connections later, etc.)
+     *
+     * The decision of which node to select is left to the injected strategy class (so we can cache unavailable node
+     * information at some point - useful to work around shared-nothing)
+     *
+     * One invariant is that connect() should either throw an exception, or ->selected should contain a valid, connected
+     * NodeConnectionInterface when it returns. (It is NOT guaranteed that
+     */
+    public function connect(): void
     {
+        RETRY_CONNECT:
+
         if (empty($this->pool)) {
-            $this->selected = null;
-            return;
+            throw new ClientException('The pool of connections is empty');
         }
 
-        $this->selected = $this->strategy->pickNode($this->pool);
+        $this->selected = $this->strategy->pickInitialConnection($this->pool);
 
+        try {
+            $this->selected->connect();
 
-        $this->selected->connect();
+            if ($this->autodiscover) {
+                $this->discover();
+            }
+        } catch (BaseConnectionException $e) {
+            $this->remove($this->selected);
+            $this->selected = null;
+
+            goto RETRY_CONNECT;
+        }
     }
 
     public function disconnect()
     {
         if ($this->selected) {
-            $this->selected->disconnect();
-        }
-    }
-
-    public function discover(): void
-    {
-        if (!$this->connectionFactory) {
-            throw new ClientException('Discovery requires a connection factory');
-        }
-
-        $nodes = $this->pool;
-
-        foreach ($nodes as $connection) {
-            try {
-                $this->discoverFromNode($connection, $this->connectionFactory);
-            } catch (ConnectionException $exception) {
-                $this->remove($connection);
-                continue;
+            if ($this->selected->isConnected()) {
+                $this->selected->disconnect();
             }
+
+            $this->selected = null;
         }
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function executeCommand(CommandInterface $command)
     {
         return $this->retryCommandOnFailure($command, __FUNCTION__);
     }
 
-    public function getConnection(CommandInterface $command): ?NodeConnectionInterface
+    /**
+     * @param CommandInterface $command
+     * @return array
+     */
+    public function executeCommandOnCluster(CommandInterface $command)
     {
+        $responses = [];
+
+        foreach ($this->clusterNodes as $parameters) {
+            $connection = $this->findOrCreateConnection($parameters);
+
+            if (!$connection->isConnected()) {
+                $connection->connect();
+            }
+
+            $responses[] = $connection->executeCommand($command);
+        }
+
+        return $responses;
+    }
+
+    /**
+     * Executes the specified Redis command on all the current connections of the cluster
+     *
+     * @param CommandInterface $command A Redis command.
+     * @return array
+     */
+    public function executeCommandOnPool(CommandInterface $command)
+    {
+        $responses = [];
+
+        foreach ($this->pool as $connection) {
+            // We are lazy about connecting to nodes other than the selected one
+            if (!$connection->isConnected()) {
+                $connection->connect();
+            }
+
+            $responses[] = $connection->executeCommand($command);
+        }
+
+        return $responses;
+    }
+
+    /**
+     * Returns the current connection that we're using
+     *
+     * @param CommandInterface $_unused
+     * @return null|NodeConnectionInterface
+     */
+    public function getConnection(CommandInterface $_unused = null): ?NodeConnectionInterface
+    {
+        if (!$this->selected) {
+            $this->selected = $this->strategy->pickInitialConnection($this->pool);
+        }
+
         return $this->selected;
     }
 
@@ -148,14 +231,6 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         return $this->selected && $this->selected->isConnected();
     }
 
-    public function pickNode(): NodeConnectionInterface
-    {
-        return $this->strategy->pickNode($this->pool);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function readResponse(CommandInterface $command)
     {
         return $this->retryCommandOnFailure($command, __FUNCTION__);
@@ -171,21 +246,27 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         }
 
         if ($this->selected === $connection) {
-            $this->selected = null;
-
-            // Choose another?
-            // $this->setSelected($this->strategy->selectInitialNode($this->pool));
+            $this->reset();
         }
 
         return $removed;
     }
 
-    /**
-     * {@inheritdoc}
-     */
     public function writeRequest(CommandInterface $command)
     {
         $this->retryCommandOnFailure($command, __FUNCTION__);
+    }
+
+    /**
+     * Switches the internal connection instance in use.
+     *
+     * @param string|NodeConnectionInterface $connection Alias of a connection
+     */
+    public function switchTo($connection): void
+    {
+        if ($this->selected) {
+            $this->disconnect();
+        }
     }
 
     public function count()
@@ -199,89 +280,93 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
     }
 
     /**
-     * Executes the specified Redis command on all the nodes of a cluster.
+     * Calls HELLO on the connection and creates connections from the response
      *
-     * @param CommandInterface $command A Redis command.
+     * The HELLO response returns a node priority and ID along with the details. The documentation says "lower is
+     * better, means a node is more available" but doesn't give specifics for recommended client behaviour. This
+     * client will not connect to nodes that have a priority higher than 99 (`CLUSTER LEAVING yes` marks a node as
+     * priority 100).
      *
-     * @return array
+     * The other wrinkle is nodes known by more than one address. We'll favour the address given in the cluster
+     * information, because it's more likely to be the publicly addressable one. For example, this happens if you
+     * connect to a locally networked cluster via 127.0.0.1:7711 - it'll appear in the HELLO output as 10.1.1.100 or
+     * whatever LAN address the local node has. Disque gives us the node ID, though, so we can match it up, and
+     * replace the 127.0.0.1 in the connection parameters for the current node.
+     *
+     * The upshot is that you should make sure all addresses in the HELLO output are addressable and can be connected
+     * to by every client (because any of them may be swapped to after a -LEAVING error response for example).
+     *
+     * @throws ClientException
+     * @internal param NodeConnectionInterface $connection
      */
-    public function executeCommandOnNodes(CommandInterface $command)
+    public function discover(): void
     {
-        $responses = [];
-
-        foreach ($this->pool as $connection) {
-            // We are lazy about connecting to other nodes
-            if (!$connection->isConnected()) {
-                $connection->connect();
-            }
-
-            $responses[] = $connection->executeCommand($command);
+        if (!$this->isConnected()) {
+            throw new ClientException('Client should be connected before calling discover');
         }
 
-        return $responses;
-    }
+        $hello = new ServerHello();
 
-    protected function setSelected(?NodeConnectionInterface $connection): void
-    {
-        $this->selected = $connection;
-    }
+        $response = $this->selected->executeCommand($hello);
+        [$version, $id, $nodes] = $hello->parseResponse($response);
 
-    protected function discoverFromNode($connection, $connectionFactory)
-    {
-        $response = $connection->executeCommand(RawCommand::create('HELLO'));
-        $replication = $this->handleInfoResponse($response);
-
-        if ($replication['role'] !== 'master') {
-            throw new ClientException("Role mismatch (expected master, got slave) [$connection]");
+        if ($version !== ServerHello::VERSION_1) {
+            throw new ClientException('HELLO protocol version ' . $version . ' not implemented');
         }
 
-        $this->slaves = array();
+        $this->selectedId = $id;
+        $this->clusterNodes = [];
 
-        foreach ($replication as $k => $v) {
-            $parameters = null;
-
-            if (strpos($k, 'slave') === 0 && preg_match('/ip=(?P<host>.*),port=(?P<port>\d+)/', $v, $parameters)) {
-                $slaveConnection = $connectionFactory->create(array(
-                    'host' => $parameters['host'],
-                    'port' => $parameters['port'],
-                ));
-
-                $this->add($slaveConnection);
-            }
+        foreach ($nodes as $node) {
+            $this->clusterNodes[$node[0]] = $node;
         }
     }
 
     /**
-     * Handles response from HELLO.
-     *
-     * @param string $response
-     *
-     * @return array
+     * Reset the currently selected connection
      */
-    private function handleHelloResponse($response)
+    protected function reset(): void
     {
-        $info = array();
+        $this->selected = null;
+        $this->selectedId = null;
+    }
 
-        foreach (preg_split('/\r?\n/', $response) as $row) {
-            if (strpos($row, ':') === false) {
-                continue;
+    private function findOrCreateConnection(Parameters $parameters): NodeConnectionInterface
+    {
+        foreach ($this->pool as $connection) {
+            $p = $connection->getParameters();
+
+            if ($p->host === $parameters->host && $p->port === $parameters->port) {
+                return $connection;
             }
-
-            list($k, $v) = explode(':', $row, 2);
-            $info[$k] = $v;
         }
 
-        return $info;
+        $connection = $this->connectionFactory->create($parameters);
+
+        if (!$connection) {
+            throw new ClientException('Cannot create conncetion to cluster node');
+        }
+
+        $this->add($connection);
+
+        return $connection;
     }
 
     /**
      * Retries the execution of a command upon a LEAVING response
      *
-     * @param CommandInterface $command Command instance.
-     * @param string           $method  Actual method.
+     * Upstream documentation of how to handle LEAVING errors
+     *
+     *   The GETJOB command, or other commands, may return a -LEAVING error instead of blocking. This error should be
+     *   considered by the client library as a request to connect to a different node, since the node it is connected
+     *   to is not able to serve the request since it is leaving the cluster. Nodes in this state have a very high
+     *   priority number published via HELLO, so will be unlikely to be picked at the next connection attempt.
+     *
+     * @param CommandInterface $command
+     * @param string           $method
      * @return mixed
      */
-    private function retryCommandOnFailure(CommandInterface $command, $method)
+    private function retryCommandOnFailure(CommandInterface $command, string $method)
     {
         RETRY_COMMAND:
 
@@ -299,36 +384,12 @@ class DisqueCluster implements ClusterInterface, \IteratorAggregate, \Countable
         } catch (ConnectionException $exception) {
             $connection = $exception->getConnection();
             $connection->disconnect();
-            $this->remove($connection);
 
-            if ($this->autoDiscovery) {
-                $this->discover();
-            }
+            $this->remove($connection);
 
             goto RETRY_COMMAND;
         }
 
         return $response;
-    }
-
-    /**
-     * Switches the internal connection instance in use.
-     *
-     * @param string|NodeConnectionInterface $connection Alias of a connection
-     */
-    public function switchTo($connection): void
-    {
-        // TODO: Implement switchTo() method.
-    }
-
-    /**
-     * Returns the connection instance currently in use by the aggregate
-     * connection.
-     *
-     * @return NodeConnectionInterface
-     */
-    public function getCurrent(): NodeConnectionInterface
-    {
-        // TODO: Implement getCurrent() method.
     }
 }
